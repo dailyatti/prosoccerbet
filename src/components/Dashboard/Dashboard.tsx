@@ -1,32 +1,29 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Brain, Calculator, Crown, Shield, TrendingUp, Users, Clock, Calendar } from 'lucide-react';
+import { Brain, Calculator, Crown, Shield, TrendingUp, Users, Clock, Calendar, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CancellationFlow } from './CancellationFlow';
 import { useState, useEffect } from 'react';
-import { getSubscriptionStatus, hasPremiumAccess, getDateInfo, formatDate } from '../../lib/dateUtils';
+import { useSubscriptionStatus, hasPremiumAccess } from '../../lib/dateUtils';
+import { CountdownTimer, CompactCountdown, DetailedCountdown } from '../UI/CountdownTimer';
 
 export function Dashboard() {
   const { user } = useAuth();
   const [showCancellation, setShowCancellation] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Update current time every minute for real-time countdown
+  // Use real-time subscription status hook
+  const subscriptionStatus = useSubscriptionStatus(user);
+  const hasAccess = hasPremiumAccess(user);
+
+  // Update current time every second for real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000); // Update every minute
+    }, 1000); // Update every second for real-time countdown
 
     return () => clearInterval(interval);
   }, []);
-
-  // Get subscription status using the professional utility
-  const subscriptionStatus = getSubscriptionStatus(user);
-  const hasAccess = hasPremiumAccess(user);
-
-  // Get detailed trial/subscription info
-  const trialInfo = user?.trial_expires_at ? getDateInfo(user.trial_expires_at) : null;
-  const subscriptionInfo = user?.subscription_expires_at ? getDateInfo(user.subscription_expires_at) : null;
 
   const tools = [
     {
@@ -82,6 +79,12 @@ export function Dashboard() {
       changeType: 'increase'
     }
   ];
+
+  // Handle subscription expiration
+  const handleSubscriptionExpire = () => {
+    // Could trigger notifications, redirects, etc.
+    console.log('Subscription expired!');
+  };
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -140,7 +143,7 @@ export function Dashboard() {
           ))}
         </motion.div>
 
-        {/* Subscription Status Card */}
+        {/* Real-time Subscription Status Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -190,8 +193,19 @@ export function Dashboard() {
             </div>
           </div>
           
+          {/* Real-time Countdown Timer */}
+          <div className="mb-4">
+            <CountdownTimer
+              expiryDate={subscriptionStatus.type === 'trial' ? user?.trial_expires_at : user?.subscription_expires_at}
+              size="lg"
+              showProgress={true}
+              onExpire={handleSubscriptionExpire}
+              className="max-w-md"
+            />
+          </div>
+          
           {/* Detailed Time Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div className="flex items-center space-x-3">
               <Calendar className="h-5 w-5 text-gray-400" />
               <div>
@@ -205,34 +219,54 @@ export function Dashboard() {
               <div>
                 <p className="text-sm text-gray-400">Time Remaining</p>
                 <p className="text-white font-medium">
-                  {subscriptionStatus.daysLeft > 0 
-                    ? `${subscriptionStatus.daysLeft} days left`
-                    : 'Expired'}
+                  {subscriptionStatus.formattedTimeLeft}
                 </p>
               </div>
             </div>
           </div>
           
-          {/* Progress Bar for Trial/Subscription */}
+          {/* Progress Bar with Real-time Updates */}
           {(subscriptionStatus.type === 'trial' || subscriptionStatus.type === 'active') && (
             <div className="mt-4">
               <div className="flex justify-between text-sm text-gray-400 mb-2">
                 <span>Progress</span>
-                <span>{subscriptionStatus.daysLeft} days remaining</span>
+                <span>{subscriptionStatus.progressPercentage.toFixed(1)}% used</span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-2">
-                <div 
+                <motion.div 
                   className={`h-2 rounded-full transition-all duration-300 ${
-                    subscriptionStatus.type === 'trial' 
+                    subscriptionStatus.isExpiringSoon 
+                      ? 'bg-gradient-to-r from-orange-500 to-red-500'
+                      : subscriptionStatus.type === 'trial'
                       ? 'bg-gradient-to-r from-blue-500 to-cyan-500'
                       : 'bg-gradient-to-r from-green-500 to-emerald-500'
                   }`}
-                  style={{ 
-                    width: `${Math.max(0, Math.min(100, (subscriptionStatus.daysLeft / 30) * 100))}%` 
-                  }}
-                ></div>
+                  initial={{ width: 0 }}
+                  animate={{ width: `${subscriptionStatus.progressPercentage}%` }}
+                  transition={{ duration: 0.5 }}
+                />
               </div>
             </div>
+          )}
+          
+          {/* Expiring Soon Warning */}
+          {subscriptionStatus.isExpiringSoon && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-4 p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg"
+            >
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="h-5 w-5 text-orange-400" />
+                <div>
+                  <p className="text-orange-400 font-medium">Subscription Expiring Soon!</p>
+                  <p className="text-orange-300 text-sm">
+                    Your {subscriptionStatus.type === 'trial' ? 'trial' : 'subscription'} will expire in {subscriptionStatus.formattedTimeLeft}. 
+                    Renew now to maintain access to all features.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
           )}
           
           {/* Trial Upgrade CTA */}

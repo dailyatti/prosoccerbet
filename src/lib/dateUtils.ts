@@ -1,6 +1,7 @@
 /**
  * Professional date utilities for subscription and trial management
  * Handles timezone conversion, date comparisons, and user-friendly formatting
+ * Includes real-time countdown functionality
  */
 
 export interface DateInfo {
@@ -8,9 +9,12 @@ export interface DateInfo {
   daysLeft: number;
   hoursLeft: number;
   minutesLeft: number;
+  secondsLeft: number;
   formattedExpiry: string;
   formattedTimeLeft: string;
   progressPercentage: number;
+  isExpiringSoon: boolean;
+  timeUntilExpiry: number; // milliseconds
 }
 
 export interface SubscriptionStatus {
@@ -19,7 +23,25 @@ export interface SubscriptionStatus {
   color: string;
   hasAccess: boolean;
   daysLeft: number;
+  hoursLeft: number;
+  minutesLeft: number;
+  secondsLeft: number;
   formattedExpiry: string;
+  formattedTimeLeft: string;
+  isExpiringSoon: boolean;
+  progressPercentage: number;
+}
+
+export interface CountdownInfo {
+  total: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  isExpired: boolean;
+  isExpiringSoon: boolean;
+  formatted: string;
+  progressPercentage: number;
 }
 
 /**
@@ -46,7 +68,7 @@ export function getCurrentTime(): Date {
 }
 
 /**
- * Calculate time difference between two dates
+ * Calculate time difference between two dates with real-time precision
  */
 export function getTimeDifference(endDate: Date, startDate: Date = getCurrentTime()): {
   total: number;
@@ -70,23 +92,25 @@ export function getTimeDifference(endDate: Date, startDate: Date = getCurrentTim
 }
 
 /**
- * Get detailed information about a date (for trials/subscriptions)
+ * Get real-time countdown information
  */
-export function getDateInfo(
+export function getCountdownInfo(
   expiryDate: string | null | undefined,
   startDate?: string | null
-): DateInfo {
+): CountdownInfo {
   const endDate = parseDate(expiryDate);
   const start = startDate ? parseDate(startDate) : getCurrentTime();
   
   if (!endDate) {
     return {
+      total: 0,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
       isExpired: true,
-      daysLeft: 0,
-      hoursLeft: 0,
-      minutesLeft: 0,
-      formattedExpiry: 'No expiry date',
-      formattedTimeLeft: 'Expired',
+      isExpiringSoon: false,
+      formatted: 'Expired',
       progressPercentage: 0
     };
   }
@@ -102,7 +126,62 @@ export function getDateInfo(
     progressPercentage = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
   }
   
-  // Format expiry date
+  // Check if expiring soon (within 24 hours)
+  const isExpiringSoon = !isExpired && diff.total <= 24 * 60 * 60 * 1000;
+  
+  // Format countdown string
+  let formatted = 'Expired';
+  if (!isExpired) {
+    if (diff.days > 0) {
+      formatted = `${diff.days}d ${diff.hours}h ${diff.minutes}m`;
+    } else if (diff.hours > 0) {
+      formatted = `${diff.hours}h ${diff.minutes}m ${diff.seconds}s`;
+    } else if (diff.minutes > 0) {
+      formatted = `${diff.minutes}m ${diff.seconds}s`;
+    } else {
+      formatted = `${diff.seconds}s`;
+    }
+  }
+  
+  return {
+    total: diff.total,
+    days: diff.days,
+    hours: diff.hours,
+    minutes: diff.minutes,
+    seconds: diff.seconds,
+    isExpired,
+    isExpiringSoon,
+    formatted,
+    progressPercentage
+  };
+}
+
+/**
+ * Get detailed information about a date (for trials/subscriptions) with real-time updates
+ */
+export function getDateInfo(
+  expiryDate: string | null | undefined,
+  startDate?: string | null
+): DateInfo {
+  const countdown = getCountdownInfo(expiryDate, startDate);
+  const endDate = parseDate(expiryDate);
+  
+  if (!endDate) {
+    return {
+      isExpired: true,
+      daysLeft: 0,
+      hoursLeft: 0,
+      minutesLeft: 0,
+      secondsLeft: 0,
+      formattedExpiry: 'No expiry date',
+      formattedTimeLeft: 'Expired',
+      progressPercentage: 0,
+      isExpiringSoon: false,
+      timeUntilExpiry: 0
+    };
+  }
+  
+  // Format expiry date with timezone
   const formattedExpiry = endDate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -112,33 +191,36 @@ export function getDateInfo(
     timeZoneName: 'short'
   });
   
-  // Format time left
+  // Format time left with real-time precision
   let formattedTimeLeft = 'Expired';
-  if (!isExpired) {
-    if (diff.days > 0) {
-      formattedTimeLeft = `${diff.days} day${diff.days !== 1 ? 's' : ''} left`;
-    } else if (diff.hours > 0) {
-      formattedTimeLeft = `${diff.hours} hour${diff.hours !== 1 ? 's' : ''} left`;
-    } else if (diff.minutes > 0) {
-      formattedTimeLeft = `${diff.minutes} minute${diff.minutes !== 1 ? 's' : ''} left`;
+  if (!countdown.isExpired) {
+    if (countdown.days > 0) {
+      formattedTimeLeft = `${countdown.days} day${countdown.days !== 1 ? 's' : ''}, ${countdown.hours} hour${countdown.hours !== 1 ? 's' : ''} left`;
+    } else if (countdown.hours > 0) {
+      formattedTimeLeft = `${countdown.hours} hour${countdown.hours !== 1 ? 's' : ''}, ${countdown.minutes} minute${countdown.minutes !== 1 ? 's' : ''} left`;
+    } else if (countdown.minutes > 0) {
+      formattedTimeLeft = `${countdown.minutes} minute${countdown.minutes !== 1 ? 's' : ''}, ${countdown.seconds} second${countdown.seconds !== 1 ? 's' : ''} left`;
     } else {
-      formattedTimeLeft = `${diff.seconds} second${diff.seconds !== 1 ? 's' : ''} left`;
+      formattedTimeLeft = `${countdown.seconds} second${countdown.seconds !== 1 ? 's' : ''} left`;
     }
   }
   
   return {
-    isExpired,
-    daysLeft: diff.days,
-    hoursLeft: diff.hours,
-    minutesLeft: diff.minutes,
+    isExpired: countdown.isExpired,
+    daysLeft: countdown.days,
+    hoursLeft: countdown.hours,
+    minutesLeft: countdown.minutes,
+    secondsLeft: countdown.seconds,
     formattedExpiry,
     formattedTimeLeft,
-    progressPercentage
+    progressPercentage: countdown.progressPercentage,
+    isExpiringSoon: countdown.isExpiringSoon,
+    timeUntilExpiry: countdown.total
   };
 }
 
 /**
- * Get subscription status with all relevant information
+ * Get subscription status with all relevant information and real-time countdown
  */
 export function getSubscriptionStatus(
   user: {
@@ -155,7 +237,13 @@ export function getSubscriptionStatus(
       color: 'from-gray-500 to-gray-600',
       hasAccess: false,
       daysLeft: 0,
-      formattedExpiry: 'N/A'
+      hoursLeft: 0,
+      minutesLeft: 0,
+      secondsLeft: 0,
+      formattedExpiry: 'N/A',
+      formattedTimeLeft: 'N/A',
+      isExpiringSoon: false,
+      progressPercentage: 0
     };
   }
   
@@ -168,11 +256,17 @@ export function getSubscriptionStatus(
     if (!trialInfo.isExpired) {
       return {
         type: 'trial',
-        text: `Free Trial (${trialInfo.daysLeft} days left)`,
-        color: 'from-blue-500 to-cyan-500',
+        text: `Free Trial (${trialInfo.daysLeft}d ${trialInfo.hoursLeft}h left)`,
+        color: trialInfo.isExpiringSoon ? 'from-orange-500 to-red-500' : 'from-blue-500 to-cyan-500',
         hasAccess: true,
         daysLeft: trialInfo.daysLeft,
-        formattedExpiry: trialInfo.formattedExpiry
+        hoursLeft: trialInfo.hoursLeft,
+        minutesLeft: trialInfo.minutesLeft,
+        secondsLeft: trialInfo.secondsLeft,
+        formattedExpiry: trialInfo.formattedExpiry,
+        formattedTimeLeft: trialInfo.formattedTimeLeft,
+        isExpiringSoon: trialInfo.isExpiringSoon,
+        progressPercentage: trialInfo.progressPercentage
       };
     } else {
       return {
@@ -181,7 +275,13 @@ export function getSubscriptionStatus(
         color: 'from-red-500 to-pink-500',
         hasAccess: false,
         daysLeft: 0,
-        formattedExpiry: trialInfo.formattedExpiry
+        hoursLeft: 0,
+        minutesLeft: 0,
+        secondsLeft: 0,
+        formattedExpiry: trialInfo.formattedExpiry,
+        formattedTimeLeft: 'Expired',
+        isExpiringSoon: false,
+        progressPercentage: 100
       };
     }
   }
@@ -193,11 +293,17 @@ export function getSubscriptionStatus(
     if (!subscriptionInfo.isExpired) {
       return {
         type: 'active',
-        text: `Active Subscription (${subscriptionInfo.daysLeft} days left)`,
-        color: 'from-green-500 to-emerald-500',
+        text: `Active Subscription (${subscriptionInfo.daysLeft}d ${subscriptionInfo.hoursLeft}h left)`,
+        color: subscriptionInfo.isExpiringSoon ? 'from-orange-500 to-red-500' : 'from-green-500 to-emerald-500',
         hasAccess: true,
         daysLeft: subscriptionInfo.daysLeft,
-        formattedExpiry: subscriptionInfo.formattedExpiry
+        hoursLeft: subscriptionInfo.hoursLeft,
+        minutesLeft: subscriptionInfo.minutesLeft,
+        secondsLeft: subscriptionInfo.secondsLeft,
+        formattedExpiry: subscriptionInfo.formattedExpiry,
+        formattedTimeLeft: subscriptionInfo.formattedTimeLeft,
+        isExpiringSoon: subscriptionInfo.isExpiringSoon,
+        progressPercentage: subscriptionInfo.progressPercentage
       };
     } else {
       return {
@@ -206,7 +312,13 @@ export function getSubscriptionStatus(
         color: 'from-red-500 to-pink-500',
         hasAccess: false,
         daysLeft: 0,
-        formattedExpiry: subscriptionInfo.formattedExpiry
+        hoursLeft: 0,
+        minutesLeft: 0,
+        secondsLeft: 0,
+        formattedExpiry: subscriptionInfo.formattedExpiry,
+        formattedTimeLeft: 'Expired',
+        isExpiringSoon: false,
+        progressPercentage: 100
       };
     }
   }
@@ -218,7 +330,13 @@ export function getSubscriptionStatus(
     color: 'from-red-500 to-pink-500',
     hasAccess: false,
     daysLeft: 0,
-    formattedExpiry: 'N/A'
+    hoursLeft: 0,
+    minutesLeft: 0,
+    secondsLeft: 0,
+    formattedExpiry: 'N/A',
+    formattedTimeLeft: 'N/A',
+    isExpiringSoon: false,
+    progressPercentage: 0
   };
 }
 
@@ -289,4 +407,58 @@ export function getTimezoneOffset(): string {
   const sign = offset <= 0 ? '+' : '-';
   
   return `UTC${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Create a real-time countdown hook for React components
+ */
+export function useCountdown(expiryDate: string | null | undefined) {
+  const [countdown, setCountdown] = React.useState<CountdownInfo>(() => 
+    getCountdownInfo(expiryDate)
+  );
+
+  React.useEffect(() => {
+    if (!expiryDate) return;
+
+    const updateCountdown = () => {
+      setCountdown(getCountdownInfo(expiryDate));
+    };
+
+    // Update immediately
+    updateCountdown();
+
+    // Update every second for real-time countdown
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [expiryDate]);
+
+  return countdown;
+}
+
+/**
+ * Create a real-time subscription status hook
+ */
+export function useSubscriptionStatus(user: any) {
+  const [status, setStatus] = React.useState<SubscriptionStatus>(() => 
+    getSubscriptionStatus(user)
+  );
+
+  React.useEffect(() => {
+    if (!user) return;
+
+    const updateStatus = () => {
+      setStatus(getSubscriptionStatus(user));
+    };
+
+    // Update immediately
+    updateStatus();
+
+    // Update every second for real-time countdown
+    const interval = setInterval(updateStatus, 1000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  return status;
 } 

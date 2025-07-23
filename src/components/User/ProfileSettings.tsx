@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Settings, User, Mail, Calendar, Crown, Lock, Save, X, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getSubscriptionStatus, formatDate } from '../../lib/dateUtils';
+import { useSubscriptionStatus, formatDate } from '../../lib/dateUtils';
+import { CompactCountdown } from '../UI/CountdownTimer';
 
 export function ProfileSettings() {
   const { user } = useAuth();
@@ -17,11 +18,13 @@ export function ProfileSettings() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  // Use real-time subscription status
+  const subscriptionStatus = useSubscriptionStatus(user);
+
   const updateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setSuccess('');
 
     try {
       // Simulate API call
@@ -74,9 +77,6 @@ export function ProfileSettings() {
     }
   };
 
-  // Get subscription status using the professional utility
-  const subscriptionStatus = getSubscriptionStatus(user);
-
   return (
     <div className="min-h-screen bg-gray-900">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -114,7 +114,7 @@ export function ProfileSettings() {
                 </h3>
                 <p className="text-gray-400 mb-4">{user?.email}</p>
                 
-                {/* Subscription Status */}
+                {/* Real-time Subscription Status */}
                 <div className="bg-gray-700/50 rounded-lg p-4 mb-4">
                   <div className="flex items-center justify-center space-x-2 mb-2">
                     <Crown className="h-5 w-5 text-yellow-400" />
@@ -127,6 +127,13 @@ export function ProfileSettings() {
                   }`}>
                     {subscriptionStatus.text}
                   </span>
+                  
+                  {/* Real-time Countdown */}
+                  <div className="mt-2">
+                    <CompactCountdown
+                      expiryDate={subscriptionStatus.type === 'trial' ? user?.trial_expires_at : user?.subscription_expires_at}
+                    />
+                  </div>
                   
                   {subscriptionStatus.formattedExpiry !== 'N/A' && (
                     <p className="text-gray-400 text-sm mt-2">
