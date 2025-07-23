@@ -1,37 +1,32 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Brain, Calculator, Crown, Shield, TrendingUp, Users } from 'lucide-react';
+import { Brain, Calculator, Crown, Shield, TrendingUp, Users, Clock, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CancellationFlow } from './CancellationFlow';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getSubscriptionStatus, hasPremiumAccess, getDateInfo, formatDate } from '../../lib/dateUtils';
 
 export function Dashboard() {
   const { user } = useAuth();
   const [showCancellation, setShowCancellation] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
-  const getTrialDaysLeft = () => {
-    if (!user?.trial_expires_at) return 0;
-    const trialEnd = new Date(user.trial_expires_at);
-    const now = new Date();
-    const diffTime = trialEnd.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(0, diffDays);
-  };
+  // Update current time every minute for real-time countdown
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
 
-  const getSubscriptionStatus = () => {
-    if (!user?.is_trial_used && user?.trial_expires_at) {
-      const daysLeft = getTrialDaysLeft();
-      if (daysLeft > 0) {
-        return { type: 'trial', text: `Free Trial (${daysLeft} days left)`, color: 'from-blue-500 to-cyan-500' };
-      } else {
-        return { type: 'expired', text: 'Trial Expired', color: 'from-red-500 to-pink-500' };
-      }
-    } else if (user?.subscription_active) {
-      return { type: 'active', text: 'Active Subscription', color: 'from-green-500 to-emerald-500' };
-    } else {
-      return { type: 'inactive', text: 'No Active Subscription', color: 'from-red-500 to-pink-500' };
-    }
-  };
+    return () => clearInterval(interval);
+  }, []);
+
+  // Get subscription status using the professional utility
+  const subscriptionStatus = getSubscriptionStatus(user);
+  const hasAccess = hasPremiumAccess(user);
+
+  // Get detailed trial/subscription info
+  const trialInfo = user?.trial_expires_at ? getDateInfo(user.trial_expires_at) : null;
+  const subscriptionInfo = user?.subscription_expires_at ? getDateInfo(user.subscription_expires_at) : null;
 
   const tools = [
     {
@@ -73,22 +68,20 @@ export function Dashboard() {
     },
     {
       name: 'Tools Available',
-      value: user?.subscription_active || (!user?.is_trial_used && user?.trial_expires_at && new Date(user.trial_expires_at) > new Date()) ? '3' : '0',
+      value: hasAccess ? '3' : '0',
       icon: Shield,
       change: '+1',
       changeType: 'increase'
     },
     {
       name: 'Account Status',
-      value: getSubscriptionStatus().type === 'trial' ? 'Trial' : getSubscriptionStatus().type === 'active' ? 'Premium' : 'Free',
+      value: subscriptionStatus.type === 'trial' ? 'Trial' : 
+             subscriptionStatus.type === 'active' ? 'Premium' : 'Free',
       icon: TrendingUp,
-      change: getTrialDaysLeft() > 0 ? `${getTrialDaysLeft()}d` : '',
+      change: subscriptionStatus.daysLeft > 0 ? `${subscriptionStatus.daysLeft}d` : '',
       changeType: 'increase'
     }
   ];
-  
-  const subscriptionStatus = getSubscriptionStatus();
-  const hasAccess = user?.subscription_active || (!user?.is_trial_used && user?.trial_expires_at && new Date(user.trial_expires_at) > new Date());
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -101,7 +94,7 @@ export function Dashboard() {
         >
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl font-bold text-white">
-            Welcome back, {user?.full_name || user?.email}
+              Welcome back, {user?.full_name || user?.email}
             </h1>
             <div className={`px-4 py-2 rounded-full bg-gradient-to-r ${subscriptionStatus.color} text-white font-medium text-sm`}>
               {subscriptionStatus.text}
@@ -147,11 +140,127 @@ export function Dashboard() {
           ))}
         </motion.div>
 
-        {/* Tools Grid */}
+        {/* Subscription Status Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className={`rounded-lg p-6 border mb-8 ${
+            subscriptionStatus.type === 'active' 
+              ? 'bg-gradient-to-r from-green-500/10 to-blue-500/10 border-green-500/20'
+              : subscriptionStatus.type === 'trial'
+              ? 'bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/20' 
+              : 'bg-gradient-to-r from-red-500/10 to-pink-500/10 border-red-500/20'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                {subscriptionStatus.type === 'trial' ? 'Free Trial Status' : 'Subscription Status'}
+              </h3>
+              <p className="text-gray-400 text-sm">
+                {subscriptionStatus.type === 'active' 
+                  ? 'You have full access to all professional tools'
+                  : subscriptionStatus.type === 'trial'
+                  ? `Enjoy ${subscriptionStatus.daysLeft} more days of free access to all features`
+                  : 'Subscribe to unlock all professional tools and features'}
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              {subscriptionStatus.type === 'active' && user?.subscription_active && (
+                <button
+                  data-cancel-subscription
+                  onClick={() => setShowCancellation(true)}
+                  className="text-red-400 hover:text-red-300 text-sm underline transition-colors"
+                >
+                  Cancel subscription
+                </button>
+              )}
+              
+              {(subscriptionStatus.type === 'expired' || subscriptionStatus.type === 'inactive') && (
+                <a
+                  href="https://whop.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Subscribe Now
+                </a>
+              )}
+            </div>
+          </div>
+          
+          {/* Detailed Time Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center space-x-3">
+              <Calendar className="h-5 w-5 text-gray-400" />
+              <div>
+                <p className="text-sm text-gray-400">Expires</p>
+                <p className="text-white font-medium">{subscriptionStatus.formattedExpiry}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <Clock className="h-5 w-5 text-gray-400" />
+              <div>
+                <p className="text-sm text-gray-400">Time Remaining</p>
+                <p className="text-white font-medium">
+                  {subscriptionStatus.daysLeft > 0 
+                    ? `${subscriptionStatus.daysLeft} days left`
+                    : 'Expired'}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Progress Bar for Trial/Subscription */}
+          {(subscriptionStatus.type === 'trial' || subscriptionStatus.type === 'active') && (
+            <div className="mt-4">
+              <div className="flex justify-between text-sm text-gray-400 mb-2">
+                <span>Progress</span>
+                <span>{subscriptionStatus.daysLeft} days remaining</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    subscriptionStatus.type === 'trial' 
+                      ? 'bg-gradient-to-r from-blue-500 to-cyan-500'
+                      : 'bg-gradient-to-r from-green-500 to-emerald-500'
+                  }`}
+                  style={{ 
+                    width: `${Math.max(0, Math.min(100, (subscriptionStatus.daysLeft / 30) * 100))}%` 
+                  }}
+                ></div>
+              </div>
+            </div>
+          )}
+          
+          {/* Trial Upgrade CTA */}
+          {subscriptionStatus.type === 'trial' && (
+            <div className="mt-4 pt-4 border-t border-blue-500/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white font-medium">Loving the trial?</p>
+                  <p className="text-gray-400 text-sm">Upgrade now and never lose access</p>
+                </div>
+                <a
+                  href="https://whop.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  Upgrade to Premium
+                </a>
+              </div>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Tools Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
           className="mb-8"
         >
           <h2 className="text-2xl font-bold text-white mb-6">Available Tools</h2>
@@ -212,83 +321,6 @@ export function Dashboard() {
                   </p>
                 </motion.div>
               ))}
-            </div>
-          )}
-        </motion.div>
-
-        {/* Subscription Status */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className={`rounded-lg p-6 border ${
-            subscriptionStatus.type === 'active' 
-              ? 'bg-gradient-to-r from-green-500/10 to-blue-500/10 border-green-500/20'
-              : subscriptionStatus.type === 'trial'
-              ? 'bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/20' 
-              : 'bg-gradient-to-r from-red-500/10 to-pink-500/10 border-red-500/20'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">
-                {subscriptionStatus.type === 'trial' ? 'Free Trial Status' : 'Subscription Status'}
-              </h3>
-              <p className="text-gray-400 text-sm">
-                {subscriptionStatus.type === 'active' 
-                  ? 'You have full access to all professional tools'
-                  : subscriptionStatus.type === 'trial'
-                  ? `Enjoy ${getTrialDaysLeft()} more days of free access to all features`
-                  : 'Subscribe to unlock all professional tools and features'}
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              {subscriptionStatus.type === 'active' && user?.subscription_active && (
-                <button
-                  data-cancel-subscription
-                  onClick={() => setShowCancellation(true)}
-                  className="text-red-400 hover:text-red-300 text-sm underline transition-colors"
-                >
-                  Cancel subscription
-                </button>
-              )}
-              
-              {(subscriptionStatus.type === 'expired' || subscriptionStatus.type === 'inactive') && (
-                <a
-                  href="https://whop.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                >
-                  Subscribe Now
-                </a>
-              )}
-              
-              {user?.subscription_expires_at && (
-                <span className="text-gray-400 text-sm">
-                  Expires: {new Date(user.subscription_expires_at).toLocaleDateString()}
-                </span>
-              )}
-            </div>
-          </div>
-          
-          {/* Trial Upgrade CTA */}
-          {subscriptionStatus.type === 'trial' && (
-            <div className="mt-4 pt-4 border-t border-blue-500/20">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-white font-medium">Loving the trial?</p>
-                  <p className="text-gray-400 text-sm">Upgrade now and never lose access</p>
-                </div>
-                <a
-                  href="https://whop.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  Upgrade to Premium
-                </a>
-              </div>
             </div>
           )}
         </motion.div>

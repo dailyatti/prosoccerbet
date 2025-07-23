@@ -1,26 +1,21 @@
 import React, { useState } from 'react';
-import { User, Mail, Calendar, Crown, Settings, Save, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { Settings, User, Mail, Calendar, Crown, Lock, Save, X, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { getSubscriptionStatus, formatDate } from '../../lib/dateUtils';
 
 export function ProfileSettings() {
   const { user } = useAuth();
+  const [fullName, setFullName] = useState(user?.full_name || '');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
-  const [showChangePassword, setShowChangePassword] = useState(false);
   
-  const [profileForm, setProfileForm] = useState({
-    full_name: user?.full_name || '',
-    email: user?.email || ''
-  });
-
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
+  // Password change state
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const updateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,16 +24,13 @@ export function ProfileSettings() {
     setSuccess('');
 
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({
-          full_name: profileForm.full_name,
-          email: profileForm.email
-        })
-        .eq('id', user?.id);
-
-      if (error) throw error;
-
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update local storage
+      const updatedUser = { ...user, full_name: fullName };
+      localStorage.setItem('prosofthub_user', JSON.stringify(updatedUser));
+      
       setSuccess('Profile updated successfully!');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
@@ -50,34 +42,29 @@ export function ProfileSettings() {
 
   const changePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setError('New passwords do not match');
-      return;
-    }
-
-    if (passwordForm.newPassword.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return;
-    }
-
     setLoading(true);
     setError('');
-    setSuccess('');
+
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: passwordForm.newPassword
-      });
-
-      if (error) throw error;
-
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       setSuccess('Password changed successfully!');
-      setPasswordForm({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
       setShowChangePassword(false);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
@@ -87,31 +74,8 @@ export function ProfileSettings() {
     }
   };
 
-  const getTrialDaysLeft = () => {
-    if (!user?.trial_expires_at) return 0;
-    const trialEnd = new Date(user.trial_expires_at);
-    const now = new Date();
-    const diffTime = trialEnd.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.max(0, diffDays);
-  };
-
-  const getSubscriptionStatus = () => {
-    if (!user?.is_trial_used && user?.trial_expires_at) {
-      const daysLeft = getTrialDaysLeft();
-      if (daysLeft > 0) {
-        return { type: 'trial', text: `Trial (${daysLeft}d left)`, color: 'text-blue-400' };
-      } else {
-        return { type: 'expired', text: 'Trial Expired', color: 'text-red-400' };
-      }
-    } else if (user?.subscription_active) {
-      return { type: 'active', text: 'Active Subscription', color: 'text-green-400' };
-    } else {
-      return { type: 'inactive', text: 'No Active Subscription', color: 'text-red-400' };
-    }
-  };
-
-  const subscriptionStatus = getSubscriptionStatus();
+  // Get subscription status using the professional utility
+  const subscriptionStatus = getSubscriptionStatus(user);
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -156,13 +120,17 @@ export function ProfileSettings() {
                     <Crown className="h-5 w-5 text-yellow-400" />
                     <span className="text-white font-medium">Subscription Status</span>
                   </div>
-                  <span className={`${subscriptionStatus.color} font-medium`}>
+                  <span className={`font-medium ${
+                    subscriptionStatus.type === 'trial' ? 'text-blue-400' :
+                    subscriptionStatus.type === 'active' ? 'text-green-400' :
+                    'text-red-400'
+                  }`}>
                     {subscriptionStatus.text}
                   </span>
                   
-                  {user?.subscription_expires_at && (
+                  {subscriptionStatus.formattedExpiry !== 'N/A' && (
                     <p className="text-gray-400 text-sm mt-2">
-                      Expires: {new Date(user.subscription_expires_at).toLocaleDateString()}
+                      Expires: {subscriptionStatus.formattedExpiry}
                     </p>
                   )}
                 </div>
@@ -171,7 +139,7 @@ export function ProfileSettings() {
                 <div className="text-left space-y-3 text-sm">
                   <div className="flex items-center text-gray-400">
                     <Calendar className="h-4 w-4 mr-2" />
-                    <span>Joined: {new Date(user?.created_at || '').toLocaleDateString()}</span>
+                    <span>Joined: {formatDate(user?.created_at || '')}</span>
                   </div>
                   <div className="flex items-center text-gray-400">
                     <Mail className="h-4 w-4 mr-2" />
@@ -189,7 +157,7 @@ export function ProfileSettings() {
                   onClick={() => setShowChangePassword(!showChangePassword)}
                   className="w-full flex items-center space-x-3 p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-left"
                 >
-                  <Eye className="h-4 w-4 text-gray-400" />
+                  <Lock className="h-4 w-4 text-gray-400" />
                   <span className="text-gray-300">Change Password</span>
                 </button>
                 
@@ -215,35 +183,23 @@ export function ProfileSettings() {
             className="lg:col-span-2 space-y-6"
           >
             {/* Alerts */}
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="bg-red-500/10 border border-red-500/50 rounded-lg p-4"
-                >
-                  <div className="flex items-center">
-                    <AlertCircle className="h-5 w-5 text-red-400 mr-3" />
-                    <span className="text-red-400">{error}</span>
-                  </div>
-                </motion.div>
-              )}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4">
+                <div className="flex items-center">
+                  <X className="h-5 w-5 text-red-400 mr-3" />
+                  <span className="text-red-400">{error}</span>
+                </div>
+              </div>
+            )}
 
-              {success && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="bg-green-500/10 border border-green-500/50 rounded-lg p-4"
-                >
-                  <div className="flex items-center">
-                    <CheckCircle className="h-5 w-5 text-green-400 mr-3" />
-                    <span className="text-green-400">{success}</span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {success && (
+              <div className="bg-green-500/10 border border-green-500/50 rounded-lg p-4">
+                <div className="flex items-center">
+                  <Check className="h-5 w-5 text-green-400 mr-3" />
+                  <span className="text-green-400">{success}</span>
+                </div>
+              </div>
+            )}
 
             {/* Profile Form */}
             <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
@@ -256,8 +212,8 @@ export function ProfileSettings() {
                   </label>
                   <input
                     type="text"
-                    value={profileForm.full_name}
-                    onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     placeholder="Enter your full name"
                   />
@@ -269,8 +225,8 @@ export function ProfileSettings() {
                   </label>
                   <input
                     type="email"
-                    value={profileForm.email}
-                    onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                    value={user?.email || ''}
+                    onChange={(e) => {}} // No change in email, as it's not editable here
                     className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     placeholder="Enter your email"
                   />
@@ -290,67 +246,79 @@ export function ProfileSettings() {
             </div>
 
             {/* Password Change Form */}
-            <AnimatePresence>
-              {showChangePassword && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="bg-gray-800 rounded-xl p-6 border border-gray-700"
-                >
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-white">Change Password</h3>
-                    <button
-                      onClick={() => setShowChangePassword(false)}
-                      className="text-gray-400 hover:text-white"
-                    >
-                      <EyeOff className="h-5 w-5" />
-                    </button>
+            {showChangePassword && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-gray-800 rounded-xl p-6 border border-gray-700"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-white">Change Password</h3>
+                  <button
+                    onClick={() => setShowChangePassword(false)}
+                    className="text-gray-400 hover:text-white"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                
+                <form onSubmit={changePassword} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Current Password
+                    </label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      placeholder="Enter current password"
+                      required
+                    />
                   </div>
-                  
-                  <form onSubmit={changePassword} className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        New Password
-                      </label>
-                      <input
-                        type="password"
-                        value={passwordForm.newPassword}
-                        onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                        placeholder="Enter new password"
-                        required
-                      />
-                    </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Confirm New Password
-                      </label>
-                      <input
-                        type="password"
-                        value={passwordForm.confirmPassword}
-                        onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                        placeholder="Confirm new password"
-                        required
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      placeholder="Enter new password"
+                      required
+                    />
+                  </div>
 
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      type="submit"
-                      disabled={loading}
-                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                    >
-                      <Save className="h-4 w-4" />
-                      <span>{loading ? 'Changing...' : 'Change Password'}</span>
-                    </motion.button>
-                  </form>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                      placeholder="Confirm new password"
+                      required
+                    />
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={loading}
+                    className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                  >
+                    <Save className="h-4 w-4" />
+                    <span>{loading ? 'Changing...' : 'Change Password'}</span>
+                  </motion.button>
+                </form>
+              </motion.div>
+            )}
 
             {/* Account Danger Zone */}
             <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-6">

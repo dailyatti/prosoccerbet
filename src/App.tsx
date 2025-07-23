@@ -12,6 +12,7 @@ import { LandingPage } from './components/Landing/LandingPage';
 import { ProfileSettings } from './components/User/ProfileSettings';
 import { LoadingScreen } from './components/Loading/LoadingScreen';
 import { motion, AnimatePresence } from 'framer-motion';
+import { hasPremiumAccess } from './lib/dateUtils';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -100,8 +101,8 @@ function AppContent() {
     );
   }
 
-  // Check access for protected routes
-  const hasAccess = user.subscription_active || (user.subscription_expires_at && new Date(user.subscription_expires_at) > new Date());
+  // Check access for protected routes using professional date utility
+  const hasAccess = hasPremiumAccess(user);
   const protectedRoutes = ['prompt-generator', 'arbitrage', 'vip-tips'];
   
   if (protectedRoutes.includes(currentView) && !hasAccess) {
