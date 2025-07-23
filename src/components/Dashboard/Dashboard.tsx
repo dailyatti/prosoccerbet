@@ -6,6 +6,7 @@ import { CancellationFlow } from './CancellationFlow';
 import { useState, useEffect } from 'react';
 import { useSubscriptionStatus, hasPremiumAccess } from '../../lib/dateUtils';
 import { CountdownTimer, CompactCountdown, DetailedCountdown } from '../UI/CountdownTimer';
+import { NotificationSystem, useCountdownNotifications } from '../UI/NotificationSystem';
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -16,6 +17,9 @@ export function Dashboard() {
   const subscriptionStatus = useSubscriptionStatus(user);
   const hasAccess = hasPremiumAccess(user);
 
+  // Use countdown notifications
+  const { notifications, removeNotification, notifyExpiringSoon, notifyExpired } = useCountdownNotifications();
+
   // Update current time every second for real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
@@ -24,6 +28,23 @@ export function Dashboard() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Handle subscription expiration and warnings
+  useEffect(() => {
+    if (!user) return;
+
+    const type = subscriptionStatus.type === 'trial' ? 'trial' : 'subscription';
+    
+    // Notify when expiring soon (within 1 hour)
+    if (subscriptionStatus.isExpiringSoon && subscriptionStatus.hoursLeft <= 1 && subscriptionStatus.hoursLeft > 0) {
+      notifyExpiringSoon(subscriptionStatus.formattedTimeLeft, type);
+    }
+    
+    // Notify when expired
+    if (subscriptionStatus.type === 'expired') {
+      notifyExpired(type);
+    }
+  }, [subscriptionStatus, user, notifyExpiringSoon, notifyExpired]);
 
   const tools = [
     {
@@ -82,12 +103,19 @@ export function Dashboard() {
 
   // Handle subscription expiration
   const handleSubscriptionExpire = () => {
-    // Could trigger notifications, redirects, etc.
-    console.log('Subscription expired!');
+    const type = subscriptionStatus.type === 'trial' ? 'trial' : 'subscription';
+    notifyExpired(type);
   };
 
   return (
     <div className="min-h-screen bg-gray-900">
+      {/* Notification System */}
+      <NotificationSystem
+        notifications={notifications}
+        onRemove={removeNotification}
+        position="top-right"
+      />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <motion.div
