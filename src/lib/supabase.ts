@@ -1,24 +1,33 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder-url.supabase.co';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Add console logs to debug configuration
 console.log('Supabase Configuration:');
 console.log('- URL:', supabaseUrl);
 console.log('- Key exists:', !!supabaseKey);
-console.log('- URL is placeholder:', supabaseUrl.includes('placeholder'));
-console.log('- Key is placeholder:', supabaseKey.includes('placeholder'));
+console.log('- URL configured:', supabaseUrl.length > 0);
+console.log('- Key configured:', supabaseKey.length > 0);
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
+// Only create client if both URL and key are provided
+export const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
   }
-});
+}) : null;
+
+// Helper function to check if Supabase is properly configured
+export const isSupabaseConfigured = () => {
+  return supabaseUrl.length > 0 && supabaseKey.length > 0 && !supabaseUrl.includes('your-project-id');
+};
 
 export const signIn = async (email: string, password: string) => {
+  if (!supabase) {
+    return { data: null, error: { message: 'Supabase not configured' } };
+  }
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -27,6 +36,9 @@ export const signIn = async (email: string, password: string) => {
 };
 
 export const signUp = async (email: string, password: string, fullName: string) => {
+  if (!supabase) {
+    return { data: null, error: { message: 'Supabase not configured' } };
+  }
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -41,11 +53,17 @@ export const signUp = async (email: string, password: string, fullName: string) 
 };
 
 export const signOut = async () => {
+  if (!supabase) {
+    return { error: { message: 'Supabase not configured' } };
+  }
   const { error } = await supabase.auth.signOut();
   return { error };
 };
 
 export const getCurrentUser = async () => {
+  if (!supabase) {
+    return null;
+  }
   const { data: { user } } = await supabase.auth.getUser();
   return user;
 };
