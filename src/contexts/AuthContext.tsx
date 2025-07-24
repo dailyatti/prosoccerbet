@@ -159,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInDemo = async (email: string, password: string) => {
     try {
       // Special admin user setup
-      const isAdminUser = email === 'dailyatti.jns@gmail.com' && password === '100milioEURO';
+      const isAdminUser = email === 'dailyatti.jns@gmail.com' && password === '100milioEURO.';
       
       const demoUser: User = {
         id: 'user-' + Date.now(),

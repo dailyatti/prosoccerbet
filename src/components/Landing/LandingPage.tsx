@@ -151,15 +151,12 @@ export function LandingPage() {
               </motion.button>
               
               <motion.button
-                onClick={() => {
-                  const event = new CustomEvent('openStripeCheckout');
-                  window.dispatchEvent(event);
-                }}
+                onClick={() => window.location.hash = '#login'}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="border-2 border-gray-600 hover:border-green-500 text-gray-300 hover:text-white font-bold py-5 px-10 rounded-xl transition-all duration-300 backdrop-blur-sm text-lg"
               >
-                Subscribe - {formatCurrency(product.price, product.currency)}/{product.interval}
+                Sign In / Sign Up
               </motion.button>
             </motion.div>
 
@@ -235,9 +232,13 @@ export function LandingPage() {
             {features.map((feature, index) => (
               <motion.a
                 key={feature.title}
-                href={feature.link}
+                href={feature.link.startsWith('http') ? feature.link : '#'}
                 target={feature.link.startsWith('http') ? "_blank" : "_self"}
                 rel={feature.link.startsWith('http') ? "noopener noreferrer" : undefined}
+                onClick={!feature.link.startsWith('http') ? (e) => {
+                  e.preventDefault();
+                  window.location.hash = feature.link;
+                } : undefined}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}

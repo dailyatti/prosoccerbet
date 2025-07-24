@@ -28,31 +28,46 @@ export function Header() {
             <div className="ml-10 flex items-baseline space-x-4">
               {user && (
                 <>
-                  <a href="#dashboard" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  <button 
+                    onClick={() => window.location.hash = '#dashboard'} 
+                    className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
                     Dashboard
-                  </a>
-                  <a href="#profile" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  </button>
+                  <button 
+                    onClick={() => window.location.hash = '#profile'} 
+                    className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
                     Profile
-                  </a>
+                  </button>
                   <a href="https://eng-prompt-elemz.netlify.app/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                     AI Prompt
                   </a>
                   <a href="https://prismatic-meringue-16ade7.netlify.app/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                     Arbitrage
                   </a>
-                  <a href="#free-tips" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1">
+                  <button 
+                    onClick={() => window.location.hash = '#free-tips'} 
+                    className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1"
+                  >
                     <Gift className="h-4 w-4 text-green-400" />
                     <span>Ingyenes Tippek</span>
-                  </a>
-                  <a href="#vip-tips" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1">
+                  </button>
+                  <button 
+                    onClick={() => window.location.hash = '#vip-tips'} 
+                    className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1"
+                  >
                     <Crown className="h-4 w-4 text-yellow-400" />
                     <span>VIP Tips</span>
-                  </a>
+                  </button>
                   {user.is_admin && (
-                    <a href="#admin" className="text-blue-400 hover:text-blue-300 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1">
+                    <button 
+                      onClick={() => window.location.hash = '#admin'} 
+                      className="text-blue-400 hover:text-blue-300 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1"
+                    >
                       <Settings className="h-4 w-4" />
                       <span>Admin</span>
-                    </a>
+                    </button>
                   )}
                 </>
               )}
@@ -84,14 +99,20 @@ export function Header() {
                 </button>
               </div>
             ) : (
-               <div className="flex items-center space-x-4">
-                 <button onClick={() => window.location.hash = '#login'} className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                   Sign In
-                 </button>
-                 <button onClick={() => window.location.hash = '#signup'} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                   Sign Up
-                 </button>
-               </div>
+              <div className="flex items-center space-x-4">
+                <button 
+                  onClick={() => window.location.hash = '#login'} 
+                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Sign In
+                </button>
+                <button 
+                  onClick={() => window.location.hash = '#signup'} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Sign Up
+                </button>
+              </div>
             )}
           </div>
 
@@ -117,10 +138,22 @@ export function Header() {
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               {user ? (
                 <>
-                  <button onClick={() => window.location.hash = '#dashboard'} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
+                  <button 
+                    onClick={() => {
+                      window.location.hash = '#dashboard';
+                      setIsMenuOpen(false);
+                    }} 
+                    className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                  >
                     Dashboard
                   </button>
-                  <button onClick={() => window.location.hash = '#profile'} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
+                  <button 
+                    onClick={() => {
+                      window.location.hash = '#profile';
+                      setIsMenuOpen(false);
+                    }} 
+                    className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                  >
                     Profile
                   </button>
                   <a href="https://eng-prompt-elemz.netlify.app/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
@@ -129,14 +162,32 @@ export function Header() {
                   <a href="https://prismatic-meringue-16ade7.netlify.app/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
                     Arbitrage
                   </a>
-                  <button onClick={() => window.location.hash = '#vip-tips'} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
+                  <button 
+                    onClick={() => {
+                      window.location.hash = '#vip-tips';
+                      setIsMenuOpen(false);
+                    }} 
+                    className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                  >
                     VIP Tips
                   </button>
-                  <button onClick={() => window.location.hash = '#free-tips'} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
+                  <button 
+                    onClick={() => {
+                      window.location.hash = '#free-tips';
+                      setIsMenuOpen(false);
+                    }} 
+                    className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                  >
                     Ingyenes Tippek
                   </button>
                   {user.is_admin && (
-                    <button onClick={() => window.location.hash = '#admin'} className="text-blue-400 hover:text-blue-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left">
+                    <button 
+                      onClick={() => {
+                        window.location.hash = '#admin';
+                        setIsMenuOpen(false);
+                      }} 
+                      className="text-blue-400 hover:text-blue-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                    >
                       Admin
                     </button>
                   )}
@@ -149,10 +200,22 @@ export function Header() {
                 </>
               ) : (
                 <>
-                  <button onClick={() => window.location.hash = '#login'} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
+                  <button 
+                    onClick={() => {
+                      window.location.hash = '#login';
+                      setIsMenuOpen(false);
+                    }} 
+                    className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                  >
                     Sign In
                   </button>
-                  <button onClick={() => window.location.hash = '#signup'} className="text-blue-400 hover:text-blue-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left">
+                  <button 
+                    onClick={() => {
+                      window.location.hash = '#signup';
+                      setIsMenuOpen(false);
+                    }} 
+                    className="text-blue-400 hover:text-blue-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                  >
                     Sign Up
                   </button>
                 </>

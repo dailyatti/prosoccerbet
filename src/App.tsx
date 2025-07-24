@@ -28,6 +28,7 @@ function AppContent() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.substring(1) || 'landing';
+      console.log('Navigating to:', hash); // Debug log
       setCurrentView(hash);
       
       // Set auth mode for login/signup
@@ -67,8 +68,13 @@ function AppContent() {
 
   // Navigation helper function
   const navigateTo = (view: string) => {
+    console.log('NavigateTo called:', view); // Debug log
     setCurrentView(view);
     window.location.hash = `#${view}`;
+    // Force re-render
+    setTimeout(() => {
+      setCurrentView(view);
+    }, 10);
   };
   // Show loading screen only during initial load
   if (loading) {
@@ -199,8 +205,10 @@ function AppContent() {
         return <VipTips />;
       case 'free-tips':
         return <FreeTips />;
+      case 'free-tips':
+        return <FreeTips />;
       case 'admin':
-        return user.is_admin ? <AdminPanel /> : <Dashboard />;
+        return user?.is_admin ? <AdminPanel /> : <Dashboard />;
       default:
         return <Dashboard />;
     }

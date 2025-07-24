@@ -336,7 +336,7 @@ export function Dashboard() {
                     href={tool.href}
                     target={tool.external ? "_blank" : "_self"}
                     rel={tool.external ? "noopener noreferrer" : undefined}
-                    onClick={!tool.external ? (e) => {
+                    onClick={tool.external ? undefined : (e) => {
                       e.preventDefault();
                       window.location.hash = tool.href;
                     } : undefined}
