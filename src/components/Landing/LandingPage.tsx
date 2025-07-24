@@ -403,10 +403,6 @@ export function LandingPage() {
               {product.features.map((feature, index) => (
                 <motion.div
                   key={feature}
-                 onClick={!feature.link.startsWith('http') ? (e) => {
-                   e.preventDefault();
-                   window.location.hash = feature.link;
-                 } : undefined}
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
