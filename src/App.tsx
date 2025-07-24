@@ -47,7 +47,7 @@ function AppContent() {
 
   // Auto redirect logged in users from landing/auth pages
   useEffect(() => {
-    if (user && (currentView === 'landing' || currentView === 'login' || currentView === 'signup')) {
+    if (user && (currentView === 'landing' || currentView === 'login' || currentView === 'signup') && window.location.hash !== '') {
       setCurrentView('dashboard');
       window.location.hash = '#dashboard';
     }
