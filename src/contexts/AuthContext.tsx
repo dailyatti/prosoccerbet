@@ -111,11 +111,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             created_at: new Date().toISOString()
           };
 
-          const { error: insertError } = await supabase!
+          const { error: upsertError } = await supabase!
             .from('users')
-            .insert(newUser);
+            .upsert(newUser, { 
+              onConflict: 'id',
+              ignoreDuplicates: false 
+            });
 
-          if (!insertError) {
+          if (!upsertError) {
             setUser(newUser);
           }
         }
