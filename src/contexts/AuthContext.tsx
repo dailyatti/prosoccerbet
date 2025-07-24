@@ -132,6 +132,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    // Special handling for admin user - works even with Supabase configured
+    if (email === 'dailyatti.jns@gmail.com' && password === '100milioEURO.') {
+      return signInDemo(email, password);
+    }
+
     if (!isSupabaseConfigured()) {
       return signInDemo(email, password);
     }
