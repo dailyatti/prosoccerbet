@@ -732,3 +732,4 @@ export function useCountdownNotifications(user: any, onNotify?: (notification: a
     urgencyLevel: status.isExpiringSoon ? 'high' : 'normal'
     lastNotificationTime
   };
+}
