@@ -88,7 +88,6 @@ export function Header() {
                    Sign Up
                  </button>
                </div>
-              </div>
             )}
           </div>
 
