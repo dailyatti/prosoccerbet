@@ -29,6 +29,12 @@ export function Header() {
               {user && (
                 <>
                   <button 
+                    onClick={() => window.location.hash = ''} 
+                    className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Home
+                  </button>
+                  <button 
                     onClick={() => window.location.hash = '#dashboard'} 
                     className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                   >
@@ -73,6 +79,20 @@ export function Header() {
               )}
             </div>
           </div>
+          
+          {/* Home button for non-logged in users */}
+          {!user && (
+            <div className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-4">
+                <button 
+                  onClick={() => window.location.hash = ''} 
+                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Home
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="hidden md:block">
             {user ? (
@@ -120,6 +140,9 @@ export function Header() {
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-gray-400 hover:text-white"
+            <button 
+              onClick={() => window.location.hash = ''} 
+              className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent hover:scale-105 transition-transform"
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -138,6 +161,15 @@ export function Header() {
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               {user ? (
                 <>
+                  <button 
+                    onClick={() => {
+                      window.location.hash = '';
+                      setIsMenuOpen(false);
+                    }} 
+                    className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                  >
+                    Home
+                  </button>
                   <button 
                     onClick={() => {
                       window.location.hash = '#dashboard';
@@ -200,6 +232,15 @@ export function Header() {
                 </>
               ) : (
                 <>
+                  <button 
+                    onClick={() => {
+                      window.location.hash = '';
+                      setIsMenuOpen(false);
+                    }} 
+                    className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                  >
+                    Home
+                  </button>
                   <button 
                     onClick={() => {
                       window.location.hash = '#login';
