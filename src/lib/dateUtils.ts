@@ -729,7 +729,7 @@ export function useCountdownNotifications(user: any, onNotify?: (notification: a
 
   return {
     shouldShowUpgradePrompt: status.type === 'trial' && status.hoursLeft <= 24,
-    urgencyLevel: status.isExpiringSoon ? 'high' : 'normal'
+    urgencyLevel: status.isExpiringSoon ? 'high' : 'normal',
     lastNotificationTime
   };
 }
