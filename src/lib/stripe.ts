@@ -1,10 +1,10 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from './supabase';
 
-// Initialize Stripe
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+// Initialize Stripe with your publishable key
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_live_51QktGpQsnQV19ezOheZXwgbVNx3KfIkS93RVVnqQymDym0oN9TYi9GXdfnz1RVIwUMpg0XBpGTIsYhq3SIFNj1g300d7WJKJxl';
 
-export const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
+export const stripePromise = loadStripe(stripePublishableKey);
 
 // Stripe configuration
 export const STRIPE_CONFIG = {
@@ -139,7 +139,8 @@ export async function getUserSubscription() {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch subscription status');
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch subscription status: ${errorText}`);
     }
 
     return await response.json();
@@ -157,7 +158,7 @@ export function formatCurrency(amount: number, currency: string = 'eur'): string
   }).format(amount);
 }
 
-// Check if user has premium access
+// Check if user has premium access via Stripe
 export function hasStripeAccess(user: any): boolean {
   if (!user) return false;
   
@@ -171,9 +172,9 @@ export function getStripeSubscriptionStatus(user: any) {
   if (!user) return { status: 'none', hasAccess: false };
   
   const hasActive = hasStripeAccess(user);
-  const hasTrail = user.trial_expires_at && 
-                   !user.is_trial_used && 
-                   new Date(user.trial_expires_at) > new Date();
+  const hasTrialTime = user.trial_expires_at && 
+                      !user.is_trial_used && 
+                      new Date(user.trial_expires_at) > new Date();
   
   if (hasActive) {
     return {
@@ -182,7 +183,7 @@ export function getStripeSubscriptionStatus(user: any) {
       type: 'subscription',
       expiresAt: user.subscription_expires_at
     };
-  } else if (hasTrail) {
+  } else if (hasTrialTime) {
     return {
       status: 'trial',
       hasAccess: true,
@@ -197,4 +198,17 @@ export function getStripeSubscriptionStatus(user: any) {
       expiresAt: null
     };
   }
+}
+
+// Check if we're in development mode
+export function isDevelopment(): boolean {
+  return import.meta.env.DEV || import.meta.env.VITE_NODE_ENV === 'development';
+}
+
+// Get Stripe publishable key based on environment
+export function getStripePublishableKey(): string {
+  const devKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST;
+  const prodKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+  
+  return isDevelopment() && devKey ? devKey : (prodKey || stripePublishableKey);
 }

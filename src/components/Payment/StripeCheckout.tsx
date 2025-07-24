@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Crown, Check, CreditCard, Shield, Zap, Users } from 'lucide-react';
+import { Crown, Check, CreditCard, Shield, Zap, Users, X } from 'lucide-react';
 import { createCheckoutSession, formatCurrency } from '../../lib/stripe';
 import { STRIPE_PRODUCTS } from '../../stripe-config';
 import { useAuth } from '../../contexts/AuthContext';
@@ -39,13 +39,24 @@ export function StripeCheckout({ onClose }: StripeCheckoutProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose?.()}
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-gray-800 rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-700"
+        className="bg-gray-800 rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-700 relative"
       >
+        {/* Close Button */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        )}
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -83,7 +94,7 @@ export function StripeCheckout({ onClose }: StripeCheckoutProps) {
             <ul className="space-y-3 mb-6">
               {product.features.map((feature, index) => (
                 <li key={index} className="flex items-center">
-                  <Check className="h-5 w-5 text-green-400 mr-3" />
+                  <Check className="h-5 w-5 text-green-400 mr-3 flex-shrink-0" />
                   <span className="text-gray-300">{feature}</span>
                 </li>
               ))}
@@ -108,14 +119,14 @@ export function StripeCheckout({ onClose }: StripeCheckoutProps) {
             <Shield className="h-12 w-12 text-blue-400 mx-auto mb-3" />
             <h4 className="text-white font-medium mb-2">Secure Payments</h4>
             <p className="text-gray-400 text-sm">
-              Industry-standard encryption and security
+              Industry-standard encryption and security powered by Stripe
             </p>
           </div>
           <div className="text-center">
             <Zap className="h-12 w-12 text-yellow-400 mx-auto mb-3" />
             <h4 className="text-white font-medium mb-2">Instant Access</h4>
             <p className="text-gray-400 text-sm">
-              Immediate access to all premium features
+              Immediate access to all premium features after payment
             </p>
           </div>
           <div className="text-center">
@@ -139,14 +150,16 @@ export function StripeCheckout({ onClose }: StripeCheckoutProps) {
           <p className="text-gray-400 text-sm mb-4">
             Cancel anytime. No hidden fees. Secure payment processing by Stripe.
           </p>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-300 transition-colors"
-            >
-              Maybe Later
-            </button>
-          )}
+          <div className="flex items-center justify-center space-x-4 text-xs text-gray-500">
+            <div className="flex items-center space-x-1">
+              <CreditCard className="h-4 w-4" />
+              <span>Visa, Mastercard, SEPA</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Shield className="h-4 w-4" />
+              <span>256-bit SSL</span>
+            </div>
+          </div>
         </div>
       </motion.div>
     </motion.div>
