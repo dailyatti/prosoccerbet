@@ -188,8 +188,8 @@ export function getProfessionalCountdownInfo(
     recommendedAction = 'Immediate renewal required';
   } else if (hoursLeft <= 1) {
     urgencyLevel = 'critical';
-    statusMessage: 'VIP access expires within 1 hour!',
-    recommendedAction: 'Urgently renew your subscription';
+    statusMessage = 'VIP access expires within 1 hour!';
+    recommendedAction = 'Urgently renew your subscription';
   } else if (hoursLeft <= 6) {
     urgencyLevel = 'high';
     statusMessage = 'VIP access expiring soon';
