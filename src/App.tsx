@@ -199,7 +199,7 @@ function AppContent() {
       case 'free-tips':
         return <FreeTips />;
       case 'admin':
-        return user?.is_admin ? <AdminPanel /> : <Dashboard />;
+        return <AdminPanel />;
       default:
         return <Dashboard />;
     }

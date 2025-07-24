@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X, User, LogOut, Settings, Crown, Gift } from 'lucide-react';
+import { Menu, X, User, LogOut, Settings, Crown, Gift, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -69,9 +69,9 @@ export function Header() {
                   {user.is_admin && (
                     <button 
                       onClick={() => window.location.hash = '#admin'} 
-                      className="text-blue-400 hover:text-blue-300 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1"
+                     className="text-purple-400 hover:text-purple-300 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1"
                     >
-                      <Settings className="h-4 w-4" />
+                     <Shield className="h-4 w-4" />
                       <span>Admin</span>
                     </button>
                   )}
@@ -215,7 +215,7 @@ export function Header() {
                         window.location.hash = '#admin';
                         setIsMenuOpen(false);
                       }} 
-                      className="text-blue-400 hover:text-blue-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                     className="text-purple-400 hover:text-purple-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left"
                     >
                       Admin
                     </button>
