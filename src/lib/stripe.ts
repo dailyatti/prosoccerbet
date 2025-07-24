@@ -153,6 +153,7 @@ export async function getUserSubscription() {
  */
 export function hasStripeAccess(user: any): boolean {
   return getUserAccessLevel(user) === 'premium';
+}
 /**
  * Format currency for display
  */
