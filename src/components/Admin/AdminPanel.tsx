@@ -3,7 +3,7 @@ import { Settings, Users, Crown, TrendingUp, Plus, Edit, Trash2, Save, X, Eye, B
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { User, VipTip } from '../../types';
+import type { User, VipTip } from '../../types';
 
 interface AdminStats {
   totalUsers: number;
