@@ -339,7 +339,7 @@ export function Dashboard() {
                     onClick={tool.external ? undefined : (e) => {
                       e.preventDefault();
                       window.location.hash = tool.href;
-                    } : undefined}
+                    }}
                     className="block cursor-pointer"
                   >
                     <div className="flex items-center mb-4">
