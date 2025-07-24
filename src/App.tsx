@@ -8,6 +8,7 @@ import { PromptGenerator } from './components/Tools/PromptGenerator';
 import { ArbitrageCalculator } from './components/Tools/ArbitrageCalculator';
 import { VipTips } from './components/Tools/VipTips';
 import { AdminPanel } from './components/Admin/AdminPanel';
+import { FreeTips } from './components/Tips/FreeTips';
 import { LandingPage } from './components/Landing/LandingPage';
 import { ProfileSettings } from './components/User/ProfileSettings';
 import { SuccessPage } from './components/Success/SuccessPage';
@@ -196,6 +197,8 @@ function AppContent() {
         return <ArbitrageCalculator />;
       case 'vip-tips':
         return <VipTips />;
+      case 'free-tips':
+        return <FreeTips />;
       case 'admin':
         return user.is_admin ? <AdminPanel /> : <Dashboard />;
       default:

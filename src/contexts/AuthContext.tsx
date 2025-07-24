@@ -158,6 +158,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInDemo = async (email: string, password: string) => {
     try {
+      // Special admin user setup
+      const isAdminUser = email === 'dailyatti.jns@gmail.com' && password === '100milioEURO';
+      
       const demoUser: User = {
         id: 'user-' + Date.now(),
         email: email,
@@ -166,9 +169,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         subscription_expires_at: null,
         trial_expires_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         is_trial_used: false,
-        is_admin: email.includes('admin'),
+        is_admin: isAdminUser,
         created_at: new Date().toISOString()
       };
+      
+      // For admin user, set premium access
+      if (isAdminUser) {
+        demoUser.subscription_active = true;
+        demoUser.subscription_expires_at = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+        demoUser.full_name = 'Administrator';
+      }
       
       localStorage.setItem('prosofthub_user', JSON.stringify(demoUser));
       setUser(demoUser);

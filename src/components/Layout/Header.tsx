@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X, User, LogOut, Settings, Crown } from 'lucide-react';
+import { Menu, X, User, LogOut, Settings, Crown, Gift } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -39,6 +39,10 @@ export function Header() {
                   </a>
                   <a href="https://prismatic-meringue-16ade7.netlify.app/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                     Arbitrage
+                  </a>
+                  <a href="#free-tips" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1">
+                    <Gift className="h-4 w-4 text-green-400" />
+                    <span>Ingyenes Tippek</span>
                   </a>
                   <a href="#vip-tips" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1">
                     <Crown className="h-4 w-4 text-yellow-400" />
@@ -127,6 +131,9 @@ export function Header() {
                   </a>
                   <button onClick={() => window.location.hash = '#vip-tips'} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
                     VIP Tips
+                  </button>
+                  <button onClick={() => window.location.hash = '#free-tips'} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
+                    Ingyenes Tippek
                   </button>
                   {user.is_admin && (
                     <button onClick={() => window.location.hash = '#admin'} className="text-blue-400 hover:text-blue-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left">
