@@ -4,6 +4,8 @@
  * Includes real-time countdown functionality
  */
 
+import React from 'react';
+
 export interface DateInfo {
   isExpired: boolean;
   daysLeft: number;
