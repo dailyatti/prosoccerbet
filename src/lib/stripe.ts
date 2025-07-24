@@ -114,7 +114,7 @@ export async function createPortalSession(returnUrl?: string) {
 /**
  * Get user's subscription status via Supabase Edge Function
  */
-export async function getUserSubscriptionStatus() {
+export async function getUserSubscription() {
   if (!supabase) {
     throw new Error('Supabase not configured');
   }
@@ -148,6 +148,11 @@ export async function getUserSubscriptionStatus() {
   }
 }
 
+/**
+ * Check if user has Stripe access (premium subscription)
+ */
+export function hasStripeAccess(user: any): boolean {
+  return getUserAccessLevel(user) === 'premium';
 /**
  * Format currency for display
  */
