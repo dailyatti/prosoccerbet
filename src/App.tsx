@@ -12,33 +12,16 @@ import { LandingPage } from './components/Landing/LandingPage';
 import { ProfileSettings } from './components/User/ProfileSettings';
 import { SuccessPage } from './components/Success/SuccessPage';
 import { LoadingScreen } from './components/Loading/LoadingScreen';
-import { motion, AnimatePresence } from 'framer-motion';
-import { hasPremiumAccess } from './lib/dateUtils';
 import { StripeCheckout } from './components/Payment/StripeCheckout';
-import { getUserSubscription } from './lib/stripe';
+import { motion, AnimatePresence } from 'framer-motion';
+import { getUserAccessLevel } from './lib/stripe';
+import { hasFeatureAccess } from './stripe-config';
 
 function AppContent() {
   const { user, loading } = useAuth();
   const [currentView, setCurrentView] = useState('landing');
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
-
-  // Check subscription status
-  useEffect(() => {
-    const checkSubscription = async () => {
-      if (user) {
-        try {
-          const subscription = await getUserSubscription();
-          setHasActiveSubscription(subscription?.subscription_status === 'active');
-        } catch (error) {
-          console.error('Error checking subscription:', error);
-        }
-      }
-    };
-
-    checkSubscription();
-  }, [user]);
 
   // Handle URL hash changes
   useEffect(() => {
@@ -145,45 +128,53 @@ function AppContent() {
     );
   }
 
-  // Check access for protected routes using professional date utility
-  const hasAccess = hasPremiumAccess(user) || hasActiveSubscription;
+  // Check feature access for protected routes
+  const userAccessLevel = getUserAccessLevel(user);
   const protectedRoutes = ['prompt-generator', 'arbitrage', 'vip-tips'];
   
-  if (protectedRoutes.includes(currentView) && !hasAccess) {
-    return (
-      <div className="min-h-screen bg-gray-900">
-        <Header />
-        <div className="min-h-screen flex items-center justify-center px-4">
-          <div className="max-w-md mx-auto bg-gray-800 rounded-xl shadow-xl p-8 text-center border border-gray-700">
-            <div className="mb-6">
-              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
+  if (protectedRoutes.includes(currentView)) {
+    const hasAccess = hasFeatureAccess(currentView.replace('-', '_') as any, userAccessLevel);
+    
+    if (!hasAccess) {
+      return (
+        <div className="min-h-screen bg-gray-900">
+          <Header />
+          <div className="min-h-screen flex items-center justify-center px-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-md mx-auto bg-gray-800 rounded-xl shadow-xl p-8 text-center border border-gray-700"
+            >
+              <div className="mb-6">
+                <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 0h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">Premium Feature</h2>
+                <p className="text-gray-400">
+                  You need a VIP subscription to access this professional tool.
+                </p>
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Subscription Required</h2>
-              <p className="text-gray-400">
-                You need an active subscription to access this feature.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <button
-                onClick={() => setShowStripeCheckout(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors inline-block"
-              >
-                Subscribe Now
-              </button>
-              <button
-                onClick={() => window.location.hash = 'dashboard'}
-                className="block w-full text-gray-400 hover:text-white transition-colors"
-              >
-                Back to Dashboard
-              </button>
-            </div>
+              <div className="space-y-4">
+                <button
+                  onClick={() => setShowStripeCheckout(true)}
+                  className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors inline-block w-full"
+                >
+                  Start Free Trial
+                </button>
+                <button
+                  onClick={() => window.location.hash = 'dashboard'}
+                  className="block w-full text-gray-400 hover:text-white transition-colors"
+                >
+                  Back to Dashboard
+                </button>
+              </div>
+            </motion.div>
           </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
 
   // Render main app content
@@ -193,14 +184,15 @@ function AppContent() {
         return <Dashboard />;
       case 'profile':
         return <ProfileSettings />;
+      case 'prompt-generator':
+        return <PromptGenerator />;
+      case 'arbitrage':
+        return <ArbitrageCalculator />;
       case 'vip-tips':
         return <VipTips />;
-      case 'success':
-        return <SuccessPage />;
       case 'admin':
         return user.is_admin ? <AdminPanel /> : <Dashboard />;
       default:
-        // Default to dashboard for logged in users
         return <Dashboard />;
     }
   };
@@ -221,9 +213,11 @@ function AppContent() {
       </AnimatePresence>
       
       {/* Global Stripe Checkout Modal */}
-      {showStripeCheckout && (
-        <StripeCheckout onClose={() => setShowStripeCheckout(false)} />
-      )}
+      <AnimatePresence>
+        {showStripeCheckout && (
+          <StripeCheckout onClose={() => setShowStripeCheckout(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

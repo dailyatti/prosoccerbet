@@ -1,8 +1,8 @@
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from './supabase';
 
-// Initialize Stripe with your publishable key
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_live_51QktGpQsnQV19ezOheZXwgbVNx3KfIkS93RVVnqQymDym0oN9TYi9GXdfnz1RVIwUMpg0XBpGTIsYhq3SIFNj1g300d7WJKJxl';
+// Get Stripe publishable key
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
 
 export const stripePromise = loadStripe(stripePublishableKey);
 
@@ -11,9 +11,11 @@ export const STRIPE_CONFIG = {
   publishableKey: stripePublishableKey,
   currency: 'eur',
   country: 'DE',
-};
+} as const;
 
-// Create Checkout Session
+/**
+ * Create Stripe Checkout Session via Supabase Edge Function
+ */
 export async function createCheckoutSession(
   priceId: string, 
   mode: 'payment' | 'subscription' = 'subscription',
@@ -52,28 +54,22 @@ export async function createCheckoutSession(
       throw new Error(errorData.error || 'Failed to create checkout session');
     }
 
-    const { sessionId, url } = await response.json();
+    const { url } = await response.json();
     
-    // Redirect to Stripe Checkout
     if (url) {
       window.location.href = url;
-      return;
+    } else {
+      throw new Error('No checkout URL received');
     }
-    
-    const stripe = await stripePromise;
-    if (!stripe) {
-      throw new Error('Stripe failed to load');
-    }
-    
-    const { error } = await stripe.redirectToCheckout({ sessionId });
-    if (error) throw error;
   } catch (error) {
     console.error('Error creating checkout session:', error);
     throw error;
   }
 }
 
-// Create Customer Portal Session
+/**
+ * Create Customer Portal Session via Supabase Edge Function
+ */
 export async function createPortalSession(returnUrl?: string) {
   if (!supabase) {
     throw new Error('Supabase not configured');
@@ -115,8 +111,10 @@ export async function createPortalSession(returnUrl?: string) {
   }
 }
 
-// Get user's subscription status
-export async function getUserSubscription() {
+/**
+ * Get user's subscription status via Supabase Edge Function
+ */
+export async function getUserSubscriptionStatus() {
   if (!supabase) {
     throw new Error('Supabase not configured');
   }
@@ -145,12 +143,14 @@ export async function getUserSubscription() {
 
     return await response.json();
   } catch (error) {
-    console.error('Error getting user subscription:', error);
+    console.error('Error getting subscription status:', error);
     return null;
   }
 }
 
-// Format currency
+/**
+ * Format currency for display
+ */
 export function formatCurrency(amount: number, currency: string = 'eur'): string {
   return new Intl.NumberFormat('de-DE', {
     style: 'currency',
@@ -158,57 +158,100 @@ export function formatCurrency(amount: number, currency: string = 'eur'): string
   }).format(amount);
 }
 
-// Check if user has premium access via Stripe
-export function hasStripeAccess(user: any): boolean {
+/**
+ * Calculate savings for yearly plans
+ */
+export function calculateYearlySavings(monthlyPrice: number, yearlyPrice: number): {
+  monthlyCost: number;
+  yearlyCost: number;
+  savings: number;
+  savingsPercentage: number;
+} {
+  const monthlyCost = monthlyPrice * 12;
+  const savings = monthlyCost - yearlyPrice;
+  const savingsPercentage = Math.round((savings / monthlyCost) * 100);
+  
+  return {
+    monthlyCost,
+    yearlyCost: yearlyPrice,
+    savings,
+    savingsPercentage
+  };
+}
+
+/**
+ * Check if user has active subscription
+ */
+export function hasActiveSubscription(user: any): boolean {
   if (!user) return false;
   
-  return user.subscription_active && 
-         user.subscription_expires_at && 
-         new Date(user.subscription_expires_at) > new Date();
-}
-
-// Get subscription status details
-export function getStripeSubscriptionStatus(user: any) {
-  if (!user) return { status: 'none', hasAccess: false };
-  
-  const hasActive = hasStripeAccess(user);
-  const hasTrialTime = user.trial_expires_at && 
-                      !user.is_trial_used && 
-                      new Date(user.trial_expires_at) > new Date();
-  
-  if (hasActive) {
-    return {
-      status: 'active',
-      hasAccess: true,
-      type: 'subscription',
-      expiresAt: user.subscription_expires_at
-    };
-  } else if (hasTrialTime) {
-    return {
-      status: 'trial',
-      hasAccess: true,
-      type: 'trial',
-      expiresAt: user.trial_expires_at
-    };
-  } else {
-    return {
-      status: 'expired',
-      hasAccess: false,
-      type: 'none',
-      expiresAt: null
-    };
+  // Check Stripe subscription
+  if (user.subscription_active && user.subscription_expires_at) {
+    return new Date(user.subscription_expires_at) > new Date();
   }
-}
-
-// Check if we're in development mode
-export function isDevelopment(): boolean {
-  return import.meta.env.DEV || import.meta.env.VITE_NODE_ENV === 'development';
-}
-
-// Get Stripe publishable key based on environment
-export function getStripePublishableKey(): string {
-  const devKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST;
-  const prodKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
   
-  return isDevelopment() && devKey ? devKey : (prodKey || stripePublishableKey);
+  return false;
+}
+
+/**
+ * Check if user has trial access
+ */
+export function hasTrialAccess(user: any): boolean {
+  if (!user) return false;
+  
+  return !user.is_trial_used && 
+         user.trial_expires_at && 
+         new Date(user.trial_expires_at) > new Date();
+}
+
+/**
+ * Get user access level
+ */
+export function getUserAccessLevel(user: any): 'free' | 'trial' | 'premium' {
+  if (!user) return 'free';
+  
+  if (hasActiveSubscription(user)) return 'premium';
+  if (hasTrialAccess(user)) return 'trial';
+  return 'free';
+}
+
+/**
+ * Check if environment is development
+ */
+export function isDevelopment(): boolean {
+  return import.meta.env.DEV || window.location.hostname === 'localhost';
+}
+
+/**
+ * Get appropriate Stripe key based on environment
+ */
+export function getStripeKey(): string {
+  const testKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST;
+  const liveKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+  
+  return isDevelopment() && testKey ? testKey : (liveKey || stripePublishableKey);
+}
+
+/**
+ * Validate Stripe configuration
+ */
+export function validateStripeConfig(): { isValid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  if (!stripePublishableKey) {
+    errors.push('Missing Stripe publishable key');
+  }
+  
+  if (!import.meta.env.VITE_SUPABASE_URL) {
+    errors.push('Missing Supabase URL');
+  }
+  
+  if (!import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    errors.push('Missing Supabase anon key');
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
 }
