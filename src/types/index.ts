@@ -2,7 +2,8 @@ export interface User {
   id: string;
   email: string;
   full_name?: string;
-  whop_user_id?: string;
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
   subscription_active: boolean;
   subscription_expires_at?: string;
   trial_expires_at?: string;
@@ -22,53 +23,78 @@ export interface VipTip {
   is_active: boolean;
 }
 
-export interface ArbitrageOpportunity {
+export interface StripeCustomer {
   id: string;
-  sport: string;
-  event_name: string;
-  bookmaker1: string;
-  bookmaker2: string;
-  odds1: number;
-  odds2: number;
-  profit_percentage: number;
-  created_at: string;
-}
-
-export interface WhopSubscriber {
-  id: string;
-  whop_user_id?: string;
-  email?: string;
-  user_id?: string;
-  subscription_status: string;
-  plan_id?: string;
-  subscription_start_date?: string;
-  subscription_end_date?: string;
-  last_payment_date?: string;
-  next_billing_date?: string;
-  payment_status: string;
+  user_id: string;
+  stripe_customer_id: string;
+  email: string;
+  name?: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface WhopWebhook {
+export interface StripeSubscription {
   id: string;
-  webhook_type: string;
-  webhook_data: any;
-  processed: boolean;
-  processed_at?: string;
-  error_message?: string;
-  whop_user_id?: string;
+  user_id: string;
+  stripe_customer_id: string;
+  stripe_subscription_id: string;
+  stripe_price_id: string;
+  status: string;
+  current_period_start?: string;
+  current_period_end?: string;
+  cancel_at_period_end: boolean;
+  canceled_at?: string;
   created_at: string;
+  updated_at: string;
 }
 
-export interface WhopSyncLog {
+export interface StripeProduct {
   id: string;
-  sync_type: string;
+  stripe_product_id: string;
+  name: string;
+  description?: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StripePrice {
+  id: string;
+  stripe_price_id: string;
+  stripe_product_id: string;
+  unit_amount: number;
+  currency: string;
+  recurring_interval?: string;
+  recurring_interval_count?: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StripeInvoice {
+  id: string;
+  user_id: string;
+  stripe_invoice_id: string;
+  stripe_customer_id: string;
+  stripe_subscription_id?: string;
+  amount_paid: number;
+  amount_due: number;
+  currency: string;
   status: string;
-  users_processed: number;
-  errors_count: number;
-  details: any;
-  admin_user_id?: string;
+  invoice_pdf?: string;
+  hosted_invoice_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StripeWebhook {
+  id: string;
+  stripe_event_id: string;
+  event_type: string;
+  processed: boolean;
+  processed_at?: string;
+  data: any;
+  error_message?: string;
   created_at: string;
 }
 

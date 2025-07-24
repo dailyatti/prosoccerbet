@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Users, Crown, TrendingUp, Plus, Edit, Trash2, Save, X, Eye } from 'lucide-react';
-import { Webhook, Globe, FolderSync as Sync, Activity, Database, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { CreditCard, Calendar, Euro, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { User, VipTip, WhopSubscriber, WhopWebhook, WhopSyncLog } from '../../types';
+import { User, VipTip, StripeCustomer, StripeSubscription } from '../../types';
 
 export function AdminPanel() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'users' | 'tips' | 'retention' | 'manual' | 'ip-bans' | 'whop'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'tips' | 'subscriptions'>('users');
   const [users, setUsers] = useState<User[]>([]);
   const [tips, setTips] = useState<VipTip[]>([]);
-  const [whopSubscribers, setWhopSubscribers] = useState<WhopSubscriber[]>([]);
-  const [whopWebhooks, setWhopWebhooks] = useState<WhopWebhook[]>([]);
-  const [whopSyncLogs, setWhopSyncLogs] = useState<WhopSyncLog[]>([]);
+  const [subscriptions, setSubscriptions] = useState<StripeSubscription[]>([]);
   const [loading, setLoading] = useState(true);
-  const [whopLoading, setWhopLoading] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
   const [editingTip, setEditingTip] = useState<VipTip | null>(null);
   const [tipForm, setTipForm] = useState({
@@ -29,6 +26,7 @@ export function AdminPanel() {
     if (user?.is_admin) {
       fetchUsers();
       fetchTips();
+      fetchSubscriptions();
     }
   }, [user]);
 
@@ -59,6 +57,26 @@ export function AdminPanel() {
       setTips(data || []);
     } catch (error) {
       console.error('Error fetching tips:', error);
+    }
+  };
+
+  const fetchSubscriptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('stripe_subscriptions')
+        .select(`
+          *,
+          users:user_id (
+            email,
+            full_name
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSubscriptions(data || []);
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
     }
   };
 
@@ -182,6 +200,19 @@ export function AdminPanel() {
     setShowTipModal(true);
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'past_due':
+        return 'bg-orange-100 text-orange-800';
+      case 'canceled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   if (!user?.is_admin) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -254,12 +285,10 @@ export function AdminPanel() {
           
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <div className="flex items-center">
-              <Eye className="h-8 w-8 text-purple-400 mr-3" />
+              <CreditCard className="h-8 w-8 text-purple-400 mr-3" />
               <div>
-                <p className="text-gray-400 text-sm">Active Tips</p>
-                <p className="text-2xl font-bold text-white">
-                  {tips.filter(t => t.is_active).length}
-                </p>
+                <p className="text-gray-400 text-sm">Stripe Subscriptions</p>
+                <p className="text-2xl font-bold text-white">{subscriptions.length}</p>
               </div>
             </div>
           </div>
@@ -281,7 +310,7 @@ export function AdminPanel() {
             }`}
           >
             <Users className="h-4 w-4" />
-            <span>User Management</span>
+            <span>Users</span>
           </button>
           <button
             onClick={() => setActiveTab('tips')}
@@ -294,11 +323,22 @@ export function AdminPanel() {
             <Crown className="h-4 w-4" />
             <span>VIP Tips</span>
           </button>
+          <button
+            onClick={() => setActiveTab('subscriptions')}
+            className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all ${
+              activeTab === 'subscriptions'
+                ? 'bg-purple-600 text-white shadow-lg'
+                : 'text-gray-400 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            <CreditCard className="h-4 w-4" />
+            <span>Subscriptions</span>
+          </button>
         </motion.div>
 
         {/* Content */}
         <AnimatePresence mode="wait">
-          {activeTab === 'users' ? (
+          {activeTab === 'users' && (
             <motion.div
               key="users"
               initial={{ opacity: 0, y: 20 }}
@@ -321,7 +361,7 @@ export function AdminPanel() {
                         Subscription
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                        Expires
+                        Stripe Customer
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                         Joined
@@ -352,9 +392,13 @@ export function AdminPanel() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                          {userData.subscription_expires_at
-                            ? new Date(userData.subscription_expires_at).toLocaleDateString()
-                            : 'N/A'}
+                          {userData.stripe_customer_id ? (
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                              Connected
+                            </span>
+                          ) : (
+                            <span className="text-gray-500">No Stripe</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                           {new Date(userData.created_at).toLocaleDateString()}
@@ -379,7 +423,9 @@ export function AdminPanel() {
                 </table>
               </div>
             </motion.div>
-          ) : (
+          )}
+
+          {activeTab === 'tips' && (
             <motion.div
               key="tips"
               initial={{ opacity: 0, y: 20 }}
@@ -423,15 +469,7 @@ export function AdminPanel() {
                           }`}>
                             {tip.confidence_level.toUpperCase()}
                           </span>
-                          <span className={`px-2 py-1 rounded text-sm ${
-                            tip.is_active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                          }`}>
-                            {tip.is_active ? 'Active' : 'Inactive'}
-                          </span>
                         </div>
-                        <p className="text-gray-400 text-sm">
-                          Created: {new Date(tip.created_at).toLocaleDateString()}
-                        </p>
                       </div>
                       <div className="flex space-x-2">
                         <motion.button
@@ -469,6 +507,73 @@ export function AdminPanel() {
                     </div>
                   </motion.div>
                 ))}
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'subscriptions' && (
+            <motion.div
+              key="subscriptions"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-gray-700">
+                <h3 className="text-lg font-semibold text-white">Stripe Subscriptions</h3>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Customer
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Period
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                        Stripe ID
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {subscriptions.map((subscription: any) => (
+                      <tr key={subscription.id} className="hover:bg-gray-700/50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-white">
+                              {subscription.users?.full_name || 'N/A'}
+                            </div>
+                            <div className="text-sm text-gray-400">{subscription.users?.email}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(subscription.status)}`}>
+                            {subscription.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                          {subscription.current_period_end ? (
+                            <div>
+                              <div>Ends: {new Date(subscription.current_period_end).toLocaleDateString()}</div>
+                              {subscription.cancel_at_period_end && (
+                                <div className="text-orange-400 text-xs">Canceling</div>
+                              )}
+                            </div>
+                          ) : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-mono">
+                          {subscription.stripe_subscription_id}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </motion.div>
           )}

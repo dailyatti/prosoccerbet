@@ -9,7 +9,7 @@ export const STRIPE_PRODUCTS = {
     interval: 'month',
     features: [
       'Precision-engineered arbitrage calculator',
-      'Low-risk profit maximization tools',
+      'Low-risk profit maximization tools', 
       'Exclusive AI prompts for sports betting',
       'Value betting analysis prompts',
       'Live decision support prompts',

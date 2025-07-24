@@ -8,6 +8,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,7 +28,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       if (!isSupabaseConfigured()) {
-        // Fallback to localStorage for demo mode
         checkLocalSession();
         return;
       }
@@ -125,6 +125,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshUser = async () => {
+    if (user?.id) {
+      await fetchUserProfile(user.id);
+    }
+  };
+
   const signIn = async (email: string, password: string) => {
     if (!isSupabaseConfigured()) {
       return signInDemo(email, password);
@@ -152,21 +158,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInDemo = async (email: string, password: string) => {
     try {
-      // Simple demo authentication
       const demoUser: User = {
         id: 'user-' + Date.now(),
         email: email,
         full_name: email.split('@')[0],
-        whop_user_id: null,
-        subscription_active: false, // Demo users start with trial only
+        subscription_active: false,
         subscription_expires_at: null,
-        trial_expires_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 day trial
+        trial_expires_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         is_trial_used: false,
         is_admin: email.includes('admin'),
         created_at: new Date().toISOString()
       };
       
-      // Save to localStorage
       localStorage.setItem('prosofthub_user', JSON.stringify(demoUser));
       setUser(demoUser);
       
@@ -196,7 +199,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error };
       }
 
-      // User will be created in the database via trigger or manual creation
       if (data.user) {
         await fetchUserProfile(data.user.id);
       }
@@ -209,21 +211,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUpDemo = async (email: string, password: string, fullName: string) => {
     try {
-      // Create demo user with trial
       const demoUser: User = {
         id: 'user-' + Date.now(),
         email: email,
         full_name: fullName,
-        whop_user_id: null,
         subscription_active: false,
         subscription_expires_at: null,
-        trial_expires_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 day trial
+        trial_expires_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         is_trial_used: false,
         is_admin: false,
         created_at: new Date().toISOString()
       };
       
-      // Save to localStorage
       localStorage.setItem('prosofthub_user', JSON.stringify(demoUser));
       setUser(demoUser);
       
@@ -247,6 +246,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
