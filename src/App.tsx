@@ -13,11 +13,13 @@ import { ProfileSettings } from './components/User/ProfileSettings';
 import { LoadingScreen } from './components/Loading/LoadingScreen';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hasPremiumAccess } from './lib/dateUtils';
+import { StripeCheckout } from './components/Payment/StripeCheckout';
 
 function AppContent() {
   const { user, loading } = useAuth();
   const [currentView, setCurrentView] = useState('landing');
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
 
   // Handle URL hash changes
   useEffect(() => {
@@ -45,6 +47,19 @@ function AppContent() {
       window.location.hash = 'dashboard';
     }
   }, [user, currentView]);
+
+  // Listen for Stripe checkout events
+  useEffect(() => {
+    const handleOpenStripeCheckout = () => {
+      setShowStripeCheckout(true);
+    };
+
+    window.addEventListener('openStripeCheckout', handleOpenStripeCheckout);
+    
+    return () => {
+      window.removeEventListener('openStripeCheckout', handleOpenStripeCheckout);
+    };
+  }, []);
 
   // Show loading screen only during initial load
   if (loading) {
@@ -175,6 +190,11 @@ function AppContent() {
           {renderView()}
         </motion.div>
       </AnimatePresence>
+      
+      {/* Global Stripe Checkout Modal */}
+      {showStripeCheckout && (
+        <StripeCheckout onClose={() => setShowStripeCheckout(false)} />
+      )}
     </div>
   );
 }

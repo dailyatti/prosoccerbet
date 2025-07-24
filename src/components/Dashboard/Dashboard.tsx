@@ -7,10 +7,12 @@ import { useState, useEffect } from 'react';
 import { useSubscriptionStatus, hasPremiumAccess } from '../../lib/dateUtils';
 import { CountdownTimer, CompactCountdown, DetailedCountdown } from '../UI/CountdownTimer';
 import { NotificationSystem, useCountdownNotifications } from '../UI/NotificationSystem';
+import { StripeCheckout } from '../Payment/StripeCheckout';
 
 export function Dashboard() {
   const { user } = useAuth();
   const [showCancellation, setShowCancellation] = useState(false);
+  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Professzionális valós idejű előfizetés státusz hook
@@ -216,12 +218,14 @@ export function Dashboard() {
               
               {(subscriptionStatus.type === 'expired' || subscriptionStatus.type === 'inactive') && (
                 <a
-                  href="https://whop.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowStripeCheckout(true);
+                  }}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
-                  Activate VIP Subscription
+                  Subscribe Now - $99/month
                 </a>
               )}
             </div>
@@ -314,12 +318,14 @@ export function Dashboard() {
                   <p className="text-gray-400 text-sm">Upgrade now and never lose access</p>
                 </div>
                 <a
-                  href="https://whop.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowStripeCheckout(true);
+                  }}
                   className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
-                  Activate VIP Subscription
+                  Subscribe Now - $99/month
                 </a>
               </div>
             </div>
@@ -406,6 +412,11 @@ export function Dashboard() {
       {/* Cancellation Flow Modal */}
       {showCancellation && (
         <CancellationFlow onClose={() => setShowCancellation(false)} />
+      )}
+      
+      {/* Stripe Checkout Modal */}
+      {showStripeCheckout && (
+        <StripeCheckout onClose={() => setShowStripeCheckout(false)} />
       )}
     </div>
   );

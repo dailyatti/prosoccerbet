@@ -4,6 +4,7 @@ import { Settings, User, Mail, Calendar, Crown, Lock, Save, X, Check } from 'luc
 import { motion } from 'framer-motion';
 import { useSubscriptionStatus, formatDate } from '../../lib/dateUtils';
 import { CompactCountdown } from '../UI/CountdownTimer';
+import { SubscriptionManagement } from '../Payment/SubscriptionManagement';
 
 export function ProfileSettings() {
   const { user } = useAuth();
@@ -170,9 +171,12 @@ export function ProfileSettings() {
                 
                 {(!user?.subscription_active && subscriptionStatus.type !== 'trial') && (
                   <a
-                    href="https://whop.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const event = new CustomEvent('openStripeCheckout');
+                      window.dispatchEvent(event);
+                    }}
                     className="w-full flex items-center space-x-3 p-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-left"
                   >
                     <Crown className="h-4 w-4 text-white" />
@@ -325,6 +329,14 @@ export function ProfileSettings() {
                   </motion.button>
                 </form>
               </motion.div>
+            )}
+
+            {/* Subscription Management */}
+            {user?.subscription_active && (
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <h3 className="text-xl font-semibold text-white mb-6">Subscription Management</h3>
+                <SubscriptionManagement />
+              </div>
             )}
 
             {/* Account Danger Zone */}

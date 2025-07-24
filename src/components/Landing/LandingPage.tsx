@@ -100,7 +100,11 @@ export function LandingPage() {
               className="flex flex-col sm:flex-row gap-6 justify-center items-center"
             >
               <motion.a
-                href="#signup"
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.hash = 'signup';
+                }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-3 group"
@@ -110,14 +114,18 @@ export function LandingPage() {
               </motion.a>
               
               <motion.a
-                href="https://whop.com/ai-sports-betting-tips-premium/"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Show Stripe checkout modal
+                  const event = new CustomEvent('openStripeCheckout');
+                  window.dispatchEvent(event);
+                }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="border-2 border-gray-600 hover:border-blue-500 text-gray-300 hover:text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 backdrop-blur-sm"
               >
-                Subscribe via Whop - $99/month
+                Subscribe via Stripe - $99/month
               </motion.a>
             </motion.div>
           </motion.div>
@@ -258,9 +266,12 @@ export function LandingPage() {
             </div>
 
             <motion.a
-              href="https://whop.com"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                const event = new CustomEvent('openStripeCheckout');
+                window.dispatchEvent(event);
+              }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white font-semibold py-4 px-12 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl inline-block text-lg"
@@ -355,7 +366,12 @@ export function LandingPage() {
               className="flex flex-col sm:flex-row gap-6 justify-center items-center"
             >
               <motion.a
-                href="#signup"
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const event = new CustomEvent('openStripeCheckout');
+                  window.dispatchEvent(event);
+                }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="bg-white text-gray-900 font-semibold py-4 px-12 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl"
@@ -363,9 +379,12 @@ export function LandingPage() {
                 Start Your Free Trial
               </motion.a>
               <motion.a
-                href="https://whop.com"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const event = new CustomEvent('openStripeCheckout');
+                  window.dispatchEvent(event);
+                }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="border-2 border-white text-white font-semibold py-4 px-12 rounded-xl transition-all duration-300 hover:bg-white hover:text-gray-900 text-lg"
