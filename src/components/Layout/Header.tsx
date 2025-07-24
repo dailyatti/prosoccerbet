@@ -71,22 +71,20 @@ export function Header() {
                 <button onClick={() => window.location.hash = '#profile'} className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   )}
                 </button>
-                <button
-                  onClick={handleSignOut}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Sign Out</span>
-                <button onClick={() => window.location.hash = '#vip-tips'} className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1">
+                   ) : (
+                     <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                       Inactive
+                     </span>
               </div>
             ) : (
-                </button>
-                <button onClick={() => window.location.hash = '#login'} className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  <button onClick={() => window.location.hash = '#admin'} className="text-blue-400 hover:text-blue-300 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1">
-                </button>
-                <button onClick={() => window.location.hash = '#signup'} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                  </button>
-                </button>
+               <div className="flex items-center space-x-4">
+                 <button onClick={() => window.location.hash = '#login'} className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                   Sign In
+                 </button>
+                 <button onClick={() => window.location.hash = '#signup'} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                   Sign Up
+                 </button>
+               </div>
               </div>
             )}
           </div>
