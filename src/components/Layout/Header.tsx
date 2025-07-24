@@ -65,16 +65,19 @@ export function Header() {
                     <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
                       Active
                     </span>
-                <button onClick={() => window.location.hash = '#dashboard'} className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  ) : (
                     <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                </button>
-                <button onClick={() => window.location.hash = '#profile'} className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                      Inactive
+                    </span>
                   )}
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="text-red-400 hover:text-red-300 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Sign Out</span>
                 </button>
-                   ) : (
-                     <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                       Inactive
-                     </span>
               </div>
             ) : (
                <div className="flex items-center space-x-4">
