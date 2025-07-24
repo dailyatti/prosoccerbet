@@ -49,12 +49,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Simple demo authentication
       const demoUser: User = {
-          subscription_active: false, // New users start with trial
-          subscription_expires_at: null,
+        id: 'user-' + Date.now(),
+        email: email,
         full_name: email.split('@')[0],
         whop_user_id: null,
-        subscription_active: true, // Demo users get active subscription
-        subscription_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        subscription_active: false, // Demo users start with trial only
+        subscription_expires_at: null,
         trial_expires_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 day trial
         is_trial_used: false,
         is_admin: email.includes('admin'),
