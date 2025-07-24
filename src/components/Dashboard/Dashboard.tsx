@@ -58,7 +58,7 @@ export function Dashboard() {
 
   const tools = [
     {
-      id: 'prompt-generator',
+      id: 'ai-prompt',
       name: 'AI Prompt Generator',
       description: 'Generate professional prompts from text or images using advanced AI',
       icon: Brain,
@@ -67,7 +67,7 @@ export function Dashboard() {
       external: true
     },
     {
-      id: 'arbitrage',
+      id: 'arbitrage-calc',
       name: 'Arbitrage Calculator',
       description: 'Find profitable arbitrage opportunities across different bookmakers',
       icon: Calculator,

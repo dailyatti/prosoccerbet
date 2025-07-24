@@ -71,11 +71,8 @@ function AppContent() {
     console.log('NavigateTo called:', view); // Debug log
     setCurrentView(view);
     window.location.hash = `#${view}`;
-    // Force re-render
-    setTimeout(() => {
-      setCurrentView(view);
-    }, 10);
   };
+
   // Show loading screen only during initial load
   if (loading) {
     return <LoadingScreen message="Loading ProSoft Hub..." />;
@@ -143,10 +140,10 @@ function AppContent() {
 
   // Check feature access for protected routes
   const userAccessLevel = getUserAccessLevel(user);
-  const protectedRoutes = ['prompt-generator', 'arbitrage', 'vip-tips'];
+  const protectedRoutes = ['vip-tips'];
   
   if (protectedRoutes.includes(currentView)) {
-    const hasAccess = hasFeatureAccess(currentView.replace('-', '_') as any, userAccessLevel);
+    const hasAccess = hasFeatureAccess('vip_tips' as any, userAccessLevel);
     
     if (!hasAccess) {
       return (
@@ -197,14 +194,8 @@ function AppContent() {
         return <Dashboard />;
       case 'profile':
         return <ProfileSettings />;
-      case 'prompt-generator':
-        return <PromptGenerator />;
-      case 'arbitrage':
-        return <ArbitrageCalculator />;
       case 'vip-tips':
         return <VipTips />;
-      case 'free-tips':
-        return <FreeTips />;
       case 'free-tips':
         return <FreeTips />;
       case 'admin':
