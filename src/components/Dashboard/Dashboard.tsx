@@ -223,8 +223,7 @@ export function Dashboard() {
             </div>
             <div className="flex items-center space-x-4">
               {!hasActiveStripe && (subscriptionStatus.type === 'expired' || subscriptionStatus.type === 'inactive') && (
-                <a
-                  href="#"
+                <button
                   onClick={(e) => {
                     e.preventDefault();
                     setShowStripeCheckout(true);
@@ -232,7 +231,7 @@ export function Dashboard() {
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                   Subscribe - {formatCurrency(product.price, product.currency)}/{product.interval}
-                </a>
+                </button>
               )}
             </div>
           </div>
@@ -301,8 +300,7 @@ export function Dashboard() {
                   <p className="text-white font-medium">Enjoying your trial?</p>
                   <p className="text-gray-400 text-sm">Upgrade now and never lose access</p>
                 </div>
-                <a
-                  href="#"
+                <button
                   onClick={(e) => {
                     e.preventDefault();
                     setShowStripeCheckout(true);
@@ -310,7 +308,7 @@ export function Dashboard() {
                   className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   Subscribe - {formatCurrency(product.price, product.currency)}/{product.interval}
-                </a>
+                </button>
               </div>
             </div>
           )}
@@ -338,6 +336,10 @@ export function Dashboard() {
                     href={tool.href}
                     target={tool.external ? "_blank" : "_self"}
                     rel={tool.external ? "noopener noreferrer" : undefined}
+                    onClick={!tool.external ? (e) => {
+                      e.preventDefault();
+                      window.location.hash = tool.href;
+                    } : undefined}
                     className="block cursor-pointer"
                   >
                     <div className="flex items-center mb-4">

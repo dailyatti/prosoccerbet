@@ -65,28 +65,28 @@ export function Header() {
                     <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
                       Active
                     </span>
-                  ) : (
+                <button onClick={() => window.location.hash = '#dashboard'} className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                     <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                      Inactive
-                    </span>
+                </button>
+                <button onClick={() => window.location.hash = '#profile'} className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   )}
-                </div>
+                </button>
                 <button
                   onClick={handleSignOut}
                   className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Sign Out</span>
-                </button>
+                <button onClick={() => window.location.hash = '#vip-tips'} className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1">
               </div>
             ) : (
-              <div className="space-x-4">
-                <a href="#login" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Sign In
-                </a>
-                <a href="#signup" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
-                  Sign Up
-                </a>
+                </button>
+                <button onClick={() => window.location.hash = '#login'} className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  <button onClick={() => window.location.hash = '#admin'} className="text-blue-400 hover:text-blue-300 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1">
+                </button>
+                <button onClick={() => window.location.hash = '#signup'} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                  </button>
+                </button>
               </div>
             )}
           </div>
@@ -113,25 +113,25 @@ export function Header() {
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               {user ? (
                 <>
-                  <a href="#dashboard" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+                  <button onClick={() => window.location.hash = '#dashboard'} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
                     Dashboard
-                  </a>
-                  <a href="#profile" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+                  </button>
+                  <button onClick={() => window.location.hash = '#profile'} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
                     Profile
-                  </a>
+                  </button>
                   <a href="https://eng-prompt-elemz.netlify.app/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
                     AI Prompt
                   </a>
-                  <a href="https://prismatic-merinque-16ade7.netlify.app/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+                  <a href="https://prismatic-meringue-16ade7.netlify.app/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
                     Arbitrage
                   </a>
-                  <a href="#vip-tips" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+                  <button onClick={() => window.location.hash = '#vip-tips'} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
                     VIP Tips
-                  </a>
+                  </button>
                   {user.is_admin && (
-                    <a href="#admin" className="text-blue-400 hover:text-blue-300 block px-3 py-2 rounded-md text-base font-medium">
+                    <button onClick={() => window.location.hash = '#admin'} className="text-blue-400 hover:text-blue-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left">
                       Admin
-                    </a>
+                    </button>
                   )}
                   <button
                     onClick={handleSignOut}
@@ -142,12 +142,12 @@ export function Header() {
                 </>
               ) : (
                 <>
-                  <a href="#login" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+                  <button onClick={() => window.location.hash = '#login'} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">
                     Sign In
-                  </a>
-                  <a href="#signup" className="text-blue-400 hover:text-blue-300 block px-3 py-2 rounded-md text-base font-medium">
+                  </button>
+                  <button onClick={() => window.location.hash = '#signup'} className="text-blue-400 hover:text-blue-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left">
                     Sign Up
-                  </a>
+                  </button>
                 </>
               )}
             </div>

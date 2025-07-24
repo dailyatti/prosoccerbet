@@ -46,7 +46,8 @@ function AppContent() {
   // Auto redirect logged in users from landing/auth pages
   useEffect(() => {
     if (user && (currentView === 'landing' || currentView === 'login' || currentView === 'signup')) {
-      window.location.hash = 'dashboard';
+      setCurrentView('dashboard');
+      window.location.hash = '#dashboard';
     }
   }, [user, currentView]);
 
@@ -63,6 +64,11 @@ function AppContent() {
     };
   }, []);
 
+  // Navigation helper function
+  const navigateTo = (view: string) => {
+    setCurrentView(view);
+    window.location.hash = `#${view}`;
+  };
   // Show loading screen only during initial load
   if (loading) {
     return <LoadingScreen message="Loading ProSoft Hub..." />;
@@ -85,7 +91,7 @@ function AppContent() {
               >
                 <LoginForm onToggleForm={() => {
                   setAuthMode('signup');
-                  window.location.hash = 'signup';
+                  navigateTo('signup');
                 }} />
               </motion.div>
             ) : (
@@ -98,7 +104,7 @@ function AppContent() {
               >
                 <SignUpForm onToggleForm={() => {
                   setAuthMode('login');
-                  window.location.hash = 'login';
+                  navigateTo('login');
                 }} />
               </motion.div>
             )}
@@ -164,7 +170,7 @@ function AppContent() {
                   Start Free Trial
                 </button>
                 <button
-                  onClick={() => window.location.hash = 'dashboard'}
+                  onClick={() => navigateTo('dashboard')}
                   className="block w-full text-gray-400 hover:text-white transition-colors"
                 >
                   Back to Dashboard
