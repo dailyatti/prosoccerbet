@@ -125,7 +125,7 @@ export function Dashboard() {
         >
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl font-bold text-white">
-              Üdvözlünk újra, {user?.full_name || user?.email}
+              Welcome back, {user?.full_name || user?.email}
             </h1>
             <div className={`px-4 py-2 rounded-full bg-gradient-to-r ${subscriptionStatus.color} text-white font-medium text-sm`}>
               {subscriptionStatus.text}
@@ -133,8 +133,8 @@ export function Dashboard() {
           </div>
           <p className="text-gray-400">
             {hasAccess 
-              ? 'Használd a professzionális eszközöket és maximalizáld a potenciálod' 
-              : '3 napos VIP trial-t kapsz minden új regisztrációhoz'}
+              ? 'Use professional tools and maximize your potential' 
+              : 'Get a 3-day VIP trial with every new registration'}
           </p>
         </motion.div>
 
@@ -193,14 +193,14 @@ export function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-white mb-2">
-                {subscriptionStatus.type === 'trial' ? '3 Napos VIP Trial Státusz' : 'VIP Előfizetés Státusz'}
+                {subscriptionStatus.type === 'trial' ? '3-Day VIP Trial Status' : 'VIP Subscription Status'}
               </h3>
               <p className="text-gray-400 text-sm">
                 {subscriptionStatus.type === 'active' 
-                  ? 'Teljes hozzáférésed van minden professzionális eszközhöz'
+                  ? 'You have full access to all professional tools'
                   : subscriptionStatus.type === 'trial'
-                  ? `Élvezd még ${subscriptionStatus.daysLeft} nap ingyenes hozzáférést minden funkcióhoz`
-                  : 'Iratkozz fel az összes eszköz eléréséhez'}
+                  ? `Enjoy ${subscriptionStatus.daysLeft} more day${subscriptionStatus.daysLeft > 1 ? 's' : ''} of free access to all features`
+                  : 'Subscribe to access all tools'}
               </p>
             </div>
             <div className="flex items-center space-x-4">
@@ -210,7 +210,7 @@ export function Dashboard() {
                   onClick={() => setShowCancellation(true)}
                   className="text-red-400 hover:text-red-300 text-sm underline transition-colors"
                 >
-                  Előfizetés lemondása
+                  Cancel Subscription
                 </button>
               )}
               
@@ -221,7 +221,7 @@ export function Dashboard() {
                   rel="noopener noreferrer"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
-                  VIP Előfizetés Aktiválása
+                  Activate VIP Subscription
                 </a>
               )}
             </div>
@@ -243,7 +243,7 @@ export function Dashboard() {
             <div className="flex items-center space-x-3">
               <Calendar className="h-5 w-5 text-gray-400" />
               <div>
-                <p className="text-sm text-gray-400">Lejárat</p>
+                <p className="text-sm text-gray-400">Expires</p>
                 <p className="text-white font-medium">{subscriptionStatus.formattedExpiry}</p>
               </div>
             </div>
@@ -251,7 +251,7 @@ export function Dashboard() {
             <div className="flex items-center space-x-3">
               <Clock className="h-5 w-5 text-gray-400" />
               <div>
-                <p className="text-sm text-gray-400">Hátralévő Idő</p>
+                <p className="text-sm text-gray-400">Time Remaining</p>
                 <p className="text-white font-medium">
                   {subscriptionStatus.formattedTimeLeft}
                 </p>
@@ -263,8 +263,8 @@ export function Dashboard() {
           {(subscriptionStatus.type === 'trial' || subscriptionStatus.type === 'active') && (
             <div className="mt-4">
               <div className="flex justify-between text-sm text-gray-400 mb-2">
-                <span>Haladás</span>
-                <span>{subscriptionStatus.progressPercentage.toFixed(1)}% felhasználva</span>
+                <span>Progress</span>
+                <span>{subscriptionStatus.progressPercentage.toFixed(1)}% used</span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-2">
                 <motion.div 
@@ -294,11 +294,11 @@ export function Dashboard() {
                 <AlertTriangle className="h-5 w-5 text-orange-400" />
                 <div>
                   <p className="text-orange-400 font-medium">
-                    {subscriptionStatus.type === 'trial' ? '3 Napos VIP Trial hamarosan lejár!' : 'VIP Előfizetés hamarosan lejár!'}
+                    {subscriptionStatus.type === 'trial' ? '3-Day VIP Trial expiring soon!' : 'VIP Subscription expiring soon!'}
                   </p>
                   <p className="text-orange-300 text-sm">
-                    A {subscriptionStatus.type === 'trial' ? '3 napos VIP trial-od' : 'VIP előfizetésed'} {subscriptionStatus.formattedTimeLeft} múlva lejár. 
-                    Újítsd meg most a folyamatos hozzáférésért.
+                    Your {subscriptionStatus.type === 'trial' ? '3-day VIP trial' : 'VIP subscription'} expires in {subscriptionStatus.formattedTimeLeft}. 
+                    Renew now for continuous access.
                   </p>
                 </div>
               </div>
@@ -310,8 +310,8 @@ export function Dashboard() {
             <div className="mt-4 pt-4 border-t border-blue-500/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white font-medium">Tetszik a 3 napos VIP trial?</p>
-                  <p className="text-gray-400 text-sm">Frissíts most és soha ne veszítsd el a hozzáférést</p>
+                  <p className="text-white font-medium">Enjoying your 3-day VIP trial?</p>
+                  <p className="text-gray-400 text-sm">Upgrade now and never lose access</p>
                 </div>
                 <a
                   href="https://whop.com"
@@ -319,7 +319,7 @@ export function Dashboard() {
                   rel="noopener noreferrer"
                   className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
-                  VIP Előfizetés Aktiválása
+                  Activate VIP Subscription
                 </a>
               </div>
             </div>
@@ -334,7 +334,6 @@ export function Dashboard() {
           className="mb-8"
         >
           <h2 className="text-2xl font-bold text-white mb-6">Available Tools</h2>
-          <h2 className="text-2xl font-bold text-white mb-6">Elérhető Eszközök</h2>
           
           {hasAccess ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -378,11 +377,11 @@ export function Dashboard() {
                       <Crown className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
                       <p className="text-white font-medium">
                         {subscriptionStatus.type === 'expired' 
-                          ? '3 Napos VIP Trial Lejárt' 
+                          ? '3-Day VIP Trial Expired' 
                           : 'VIP Funkció'}
                       </p>
                       {subscriptionStatus.type === 'expired' && (
-                        <p className="text-gray-400 text-xs mt-1">Frissíts a hozzáférésért</p>
+                        <p className="text-gray-400 text-xs mt-1">Upgrade for access</p>
                       )}
                     </div>
                   </div>

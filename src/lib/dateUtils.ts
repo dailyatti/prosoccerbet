@@ -1,7 +1,7 @@
 /**
- * Professzionális dátum utilities előfizetés és trial kezeléshez
- * Timezone konverzió, dátum összehasonlítás, felhasználóbarát formázás
- * Valós idejű visszaszámláló funkcionalitás Supabase integrációval
+ * Professional date utilities for subscription and trial management
+ * Timezone conversion, date comparison, user-friendly formatting
+ * Real-time countdown functionality with Supabase integration
  */
 
 import React from 'react';
@@ -56,13 +56,13 @@ export interface ProfessionalCountdownInfo extends CountdownInfo {
 }
 
 /**
- * Professzionális ISO dátum string feldolgozás timezone kezeléssel
+ * Professional ISO date string processing with timezone handling
  */
 export function parseDate(dateString: string | null | undefined): Date | null {
   if (!dateString) return null;
   
   try {
-    // ISO string kezelése timezone-nal
+    // Handle ISO string with timezone
     const date = new Date(dateString);
     
     // Validate date
@@ -79,7 +79,7 @@ export function parseDate(dateString: string | null | undefined): Date | null {
 }
 
 /**
- * Jelenlegi idő UTC-ben - Supabase szinkronizálva
+ * Get current time in UTC - synchronized with Supabase
  */
 export async function getCurrentTimeFromSupabase(): Promise<Date> {
   try {
@@ -97,14 +97,14 @@ export async function getCurrentTimeFromSupabase(): Promise<Date> {
 }
 
 /**
- * Gyors lokális idő lekérés
+ * Quick local time retrieval
  */
 export function getCurrentTime(): Date {
   return new Date();
 }
 
 /**
- * Idő különbség számítás két dátum között valós idejű precizitással
+ * Time difference calculation between two dates with real-time precision
  */
 export function getTimeDifference(endDate: Date, startDate: Date = getCurrentTime()): {
   total: number;
@@ -128,7 +128,7 @@ export function getTimeDifference(endDate: Date, startDate: Date = getCurrentTim
 }
 
 /**
- * Professzionális valós idejű visszaszámláló információ
+ * Professional real-time countdown information
  */
 export function getProfessionalCountdownInfo(
   expiryDate: string | null | undefined,
@@ -150,8 +150,8 @@ export function getProfessionalCountdownInfo(
       formatted: 'Expired',
       progressPercentage: 100,
       urgencyLevel: 'critical',
-      statusMessage: 'Lejárt',
-      recommendedAction: 'Előfizetés megújítása szükséges',
+      statusMessage: 'Access Expired',
+      recommendedAction: 'Subscription renewal required',
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       lastUpdated: now
     };
@@ -160,21 +160,21 @@ export function getProfessionalCountdownInfo(
   const diff = getTimeDifference(endDate, now);
   const isExpired = diff.total <= 0;
   
-  // Haladás százalék számítás
+  // Progress percentage calculation
   let progressPercentage = 0;
   if (startDate && start) {
     const totalDuration = endDate.getTime() - start.getTime();
     const elapsed = now.getTime() - start.getTime();
     progressPercentage = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
   } else {
-    // Ha nincs start dátum, becsüljük 3 napos trial alapján
+    // If no start date, estimate based on 3-day trial
     const estimatedStart = new Date(endDate.getTime() - (3 * 24 * 60 * 60 * 1000));
     const totalDuration = endDate.getTime() - estimatedStart.getTime();
     const elapsed = now.getTime() - estimatedStart.getTime();
     progressPercentage = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
   }
   
-  // Lejárat közelség ellenőrzés és sürgősségi szint
+  // Expiration proximity check and urgency level
   const hoursLeft = diff.total / (1000 * 60 * 60);
   const isExpiringSoon = !isExpired && diff.total <= 24 * 60 * 60 * 1000;
   
@@ -184,40 +184,40 @@ export function getProfessionalCountdownInfo(
   
   if (isExpired) {
     urgencyLevel = 'critical';
-    statusMessage = 'VIP hozzáférés lejárt';
-    recommendedAction = 'Azonnali megújítás szükséges';
+    statusMessage = 'VIP access expired';
+    recommendedAction = 'Immediate renewal required';
   } else if (hoursLeft <= 1) {
     urgencyLevel = 'critical';
-    statusMessage = 'VIP hozzáférés 1 órán belül lejár!';
-    recommendedAction = 'Sürgősen újítsd meg előfizetésed';
+    statusMessage: 'VIP access expires within 1 hour!',
+    recommendedAction: 'Urgently renew your subscription';
   } else if (hoursLeft <= 6) {
     urgencyLevel = 'high';
-    statusMessage = 'VIP hozzáférés hamarosan lejár';
-    recommendedAction = 'Javasoljuk az előfizetés megújítását';
+    statusMessage = 'VIP access expiring soon';
+    recommendedAction = 'We recommend renewing your subscription';
   } else if (diff.days === 0) {
     urgencyLevel = 'medium';
-    statusMessage = 'VIP hozzáférés ma lejár';
-    recommendedAction = 'Ne felejts el megújítani';
+    statusMessage = 'VIP access expires today';
+    recommendedAction = 'Don\'t forget to renew';
   } else {
     urgencyLevel = 'low';
-    statusMessage = `${diff.days} nap VIP hozzáférés van hátra`;
-    recommendedAction = 'Élvezd a VIP szolgáltatásokat';
+    statusMessage = `${diff.days} day${diff.days > 1 ? 's' : ''} of VIP access remaining`;
+    recommendedAction = 'Enjoy your VIP features';
   }
   
-  // Visszaszámláló string formázás magyar nyelven
+  // Countdown string formatting in English
   let formatted = 'Expired';
   if (!isExpired) {
     if (diff.days > 0) {
-      formatted = `${diff.days} nap ${diff.hours} óra ${diff.minutes} perc`;
+      formatted = `${diff.days}d ${diff.hours}h ${diff.minutes}m`;
     } else if (diff.hours > 0) {
-      formatted = `${diff.hours} óra ${diff.minutes} perc ${diff.seconds} mp`;
+      formatted = `${diff.hours}h ${diff.minutes}m ${diff.seconds}s`;
     } else if (diff.minutes > 0) {
-      formatted = `${diff.minutes} perc ${diff.seconds} másodperc`;
+      formatted = `${diff.minutes}m ${diff.seconds}s`;
     } else {
-      formatted = `${diff.seconds} másodperc`;
+      formatted = `${diff.seconds}s`;
     }
   } else {
-    formatted = 'Lejárt';
+    formatted = 'Expired';
   }
   
   return {
@@ -239,7 +239,7 @@ export function getProfessionalCountdownInfo(
 }
 
 /**
- * Visszafelé kompatibilitás a régi funkcióval
+ * Backward compatibility with the old function
  */
 export function getCountdownInfo(
   expiryDate: string | null | undefined,
@@ -260,7 +260,7 @@ export function getCountdownInfo(
 }
 
 /**
- * Részletes dátum információ (trial/előfizetés) valós idejű frissítéssel
+ * Detailed date information (trial/subscription) with real-time updates
  */
 export function getDateInfo(
   expiryDate: string | null | undefined,
@@ -294,20 +294,20 @@ export function getDateInfo(
     timeZoneName: 'short'
   });
   
-  // Format time left with real-time precision
+  // Format time left with real-time precision in English
   let formattedTimeLeft = 'Expired';
   if (!countdown.isExpired) {
     if (countdown.days > 0) {
-      formattedTimeLeft = `${countdown.days} nap, ${countdown.hours} óra van hátra`;
+      formattedTimeLeft = `${countdown.days} day${countdown.days > 1 ? 's' : ''}, ${countdown.hours} hour${countdown.hours > 1 ? 's' : ''} left`;
     } else if (countdown.hours > 0) {
-      formattedTimeLeft = `${countdown.hours} óra, ${countdown.minutes} perc van hátra`;
+      formattedTimeLeft = `${countdown.hours} hour${countdown.hours > 1 ? 's' : ''}, ${countdown.minutes} minute${countdown.minutes > 1 ? 's' : ''} left`;
     } else if (countdown.minutes > 0) {
-      formattedTimeLeft = `${countdown.minutes} perc, ${countdown.seconds} másodperc van hátra`;
+      formattedTimeLeft = `${countdown.minutes} minute${countdown.minutes > 1 ? 's' : ''}, ${countdown.seconds} second${countdown.seconds > 1 ? 's' : ''} left`;
     } else {
-      formattedTimeLeft = `${countdown.seconds} másodperc van hátra`;
+      formattedTimeLeft = `${countdown.seconds} second${countdown.seconds > 1 ? 's' : ''} left`;
     }
   } else {
-    formattedTimeLeft = 'Lejárt';
+    formattedTimeLeft = 'Expired';
   }
   
   return {
@@ -325,7 +325,7 @@ export function getDateInfo(
 }
 
 /**
- * Előfizetés státusz minden releváns információval és valós idejű visszaszámlálóval
+ * Subscription status with all relevant information and real-time countdown
  */
 export function getSubscriptionStatus(
   user: {
@@ -338,7 +338,7 @@ export function getSubscriptionStatus(
   if (!user) {
     return {
       type: 'inactive',
-      text: 'Nincs bejelentkezve',
+      text: 'Not logged in',
       color: 'from-gray-500 to-gray-600',
       hasAccess: false,
       daysLeft: 0,
@@ -354,14 +354,14 @@ export function getSubscriptionStatus(
   
   const now = getCurrentTime();
   
-  // Először trial státusz ellenőrzés
+  // First check trial status
   if (!user.is_trial_used && user.trial_expires_at) {
     const trialInfo = getDateInfo(user.trial_expires_at);
     
     if (!trialInfo.isExpired) {
       return {
         type: 'trial',
-        text: `3 Napos VIP Trial (${trialInfo.daysLeft}n ${trialInfo.hoursLeft}ó hátra)`,
+        text: `3-Day VIP Trial (${trialInfo.daysLeft}d ${trialInfo.hoursLeft}h left)`,
         color: trialInfo.isExpiringSoon ? 'from-orange-500 to-red-500' : 'from-blue-500 to-cyan-500',
         hasAccess: true,
         daysLeft: trialInfo.daysLeft,
@@ -376,7 +376,7 @@ export function getSubscriptionStatus(
     } else {
       return {
         type: 'expired',
-        text: '3 Napos VIP Trial Lejárt',
+        text: '3-Day VIP Trial Expired',
         color: 'from-red-500 to-pink-500',
         hasAccess: false,
         daysLeft: 0,
@@ -391,14 +391,14 @@ export function getSubscriptionStatus(
     }
   }
   
-  // Előfizetés státusz ellenőrzés
+  // Check subscription status
   if (user.subscription_active && user.subscription_expires_at) {
     const subscriptionInfo = getDateInfo(user.subscription_expires_at);
     
     if (!subscriptionInfo.isExpired) {
       return {
         type: 'active',
-        text: `Aktív VIP Előfizetés (${subscriptionInfo.daysLeft}n ${subscriptionInfo.hoursLeft}ó hátra)`,
+        text: `Active VIP Subscription (${subscriptionInfo.daysLeft}d ${subscriptionInfo.hoursLeft}h left)`,
         color: subscriptionInfo.isExpiringSoon ? 'from-orange-500 to-red-500' : 'from-green-500 to-emerald-500',
         hasAccess: true,
         daysLeft: subscriptionInfo.daysLeft,
@@ -413,7 +413,7 @@ export function getSubscriptionStatus(
     } else {
       return {
         type: 'expired',
-        text: 'VIP Előfizetés Lejárt',
+        text: 'VIP Subscription Expired',
         color: 'from-red-500 to-pink-500',
         hasAccess: false,
         daysLeft: 0,
@@ -428,10 +428,10 @@ export function getSubscriptionStatus(
     }
   }
   
-  // Nincs aktív előfizetés vagy trial
+  // No active subscription or trial
   return {
     type: 'inactive',
-    text: 'Nincs Aktív VIP Előfizetés',
+    text: 'No Active VIP Subscription',
     color: 'from-red-500 to-pink-500',
     hasAccess: false,
     daysLeft: 0,
@@ -446,7 +446,7 @@ export function getSubscriptionStatus(
 }
 
 /**
- * Prémium funkciókhoz való hozzáférés ellenőrzése
+ * Check access to premium features
  */
 export function hasPremiumAccess(user: {
   subscription_active?: boolean;
@@ -515,7 +515,7 @@ export function getTimezoneOffset(): string {
 }
 
 /**
- * Valós idejű visszaszámláló hook React komponensekhez - Supabase szinkronizálással
+ * Real-time countdown hook for React components - with Supabase synchronization
  */
 export function useProfessionalCountdown(expiryDate: string | null | undefined) {
   const [countdown, setCountdown] = React.useState<ProfessionalCountdownInfo>(() => 
@@ -526,7 +526,7 @@ export function useProfessionalCountdown(expiryDate: string | null | undefined) 
   React.useEffect(() => {
     if (!expiryDate) return;
 
-    // Szerver idő szinkronizáció
+    // Server time synchronization
     const syncServerTime = async () => {
       try {
         await getCurrentTimeFromSupabase();
@@ -541,14 +541,14 @@ export function useProfessionalCountdown(expiryDate: string | null | undefined) 
       setCountdown(getProfessionalCountdownInfo(expiryDate));
     };
 
-    // Azonnali frissítés
+    // Immediate update
     syncServerTime();
     updateCountdown();
 
-    // Másodpercenkénti frissítés valós idejű visszaszámláláshoz
+    // Update every second for real-time countdown
     const interval = setInterval(updateCountdown, 1000);
 
-    // 5 percenként szerver idő szinkronizáció
+    // Server time sync every 5 minutes
     const syncInterval = setInterval(syncServerTime, 5 * 60 * 1000);
 
     return () => {
@@ -561,7 +561,7 @@ export function useProfessionalCountdown(expiryDate: string | null | undefined) 
 }
 
 /**
- * Visszafelé kompatibilitás a régi hook-kal
+ * Backward compatibility with the old hook
  */
 export function useCountdown(expiryDate: string | null | undefined) {
   const [countdown, setCountdown] = React.useState<CountdownInfo>(() => 
@@ -585,7 +585,7 @@ export function useCountdown(expiryDate: string | null | undefined) {
 }
 
 /**
- * Valós idejű előfizetés státusz hook - Supabase integrációval
+ * Real-time subscription status hook - with Supabase integration
  */
 export function useSubscriptionStatus(user: any) {
   const [status, setStatus] = React.useState<SubscriptionStatus>(() => 
@@ -601,13 +601,13 @@ export function useSubscriptionStatus(user: any) {
       setLastSync(new Date());
     };
 
-    // Azonnali frissítés
+    // Immediate update
     updateStatus();
 
-    // Másodpercenkénti frissítés valós idejű visszaszámláláshoz
+    // Update every second for real-time countdown
     const interval = setInterval(updateStatus, 1000);
 
-    // Supabase változások figyelése (ha elérhető)
+    // Watch for Supabase changes (if available)
     let subscription: any = null;
     if (supabase && user.id) {
       subscription = supabase
@@ -639,7 +639,7 @@ export function useSubscriptionStatus(user: any) {
 }
 
 /**
- * VIP trial specifikus információk
+ * VIP trial specific information
  */
 export function getVipTrialInfo(user: any) {
   if (!user || user.is_trial_used || !user.trial_expires_at) {
@@ -654,20 +654,20 @@ export function getVipTrialInfo(user: any) {
     trialDaysTotal: 3,
     daysUsed: 3 - countdown.days,
     vipBenefits: [
-      'AI Prompt Generator teljes hozzáférés',
-      'Arbitrage Calculator korlátlan használat', 
-      'VIP Tips exkluzív tartalmak',
-      'Prioritás támogatás',
-      'Mobil optimalizált élmény'
+      'AI Prompt Generator full access',
+      'Arbitrage Calculator unlimited usage', 
+      'VIP Tips exclusive content',
+      'Priority support',
+      'Mobile optimized experience'
     ],
     upgradeMessage: countdown.isExpiringSoon 
-      ? 'Ne veszítsd el VIP hozzáférésedet! Frissíts most.'
-      : 'Élvezd a VIP élményt, és frissíts a folyamatos hozzáférésért.'
+      ? 'Don\'t lose your VIP access! Upgrade now.'
+      : 'Enjoy the VIP experience and upgrade for continuous access.'
   };
 }
 
 /**
- * Professzionális értesítés rendszer a visszaszámlálóhoz
+ * Professional notification system for countdown
  */
 export function useCountdownNotifications(user: any, onNotify?: (notification: any) => void) {
   const status = useSubscriptionStatus(user);
@@ -679,49 +679,49 @@ export function useCountdownNotifications(user: any, onNotify?: (notification: a
     const now = Date.now();
     const hoursLeft = status.hoursLeft;
     
-    // Értesítések logikája
+    // Notification logic
     if (status.type === 'trial' && !status.isExpired) {
-      // 24 óra előtt
+      // 24 hours before expiration
       if (hoursLeft <= 24 && hoursLeft > 12 && (now - lastNotificationTime) > 6 * 60 * 60 * 1000) {
         onNotify({
           type: 'warning',
-          title: '3 Napos VIP Trial hamarosan lejár',
-          message: `${Math.round(hoursLeft)} óra van hátra a VIP hozzáférésedből.`,
-          action: 'Frissítés most'
+          title: '3-Day VIP Trial expiring soon',
+          message: `${Math.round(hoursLeft)} hour${Math.round(hoursLeft) > 1 ? 's' : ''} left in your VIP access.`,
+          action: 'Upgrade now'
         });
         setLastNotificationTime(now);
       }
       
-      // 12 óra előtt
+      // 12 hours before expiration
       if (hoursLeft <= 12 && hoursLeft > 6 && (now - lastNotificationTime) > 3 * 60 * 60 * 1000) {
         onNotify({
           type: 'warning',
-          title: 'VIP Trial ma lejár!',
-          message: `Csak ${Math.round(hoursLeft)} óra van hátra. Ne veszítsd el a hozzáférést!`,
-          action: 'Azonnali frissítés'
+          title: 'VIP Trial expires today!',
+          message: `Only ${Math.round(hoursLeft)} hour${Math.round(hoursLeft) > 1 ? 's' : ''} left. Don't lose access!`,
+          action: 'Immediate upgrade'
         });
         setLastNotificationTime(now);
       }
       
-      // 1 óra előtt
+      // 1 hour before expiration
       if (hoursLeft <= 1 && hoursLeft > 0 && (now - lastNotificationTime) > 30 * 60 * 1000) {
         onNotify({
           type: 'critical',
-          title: 'VIP Trial 1 órán belül lejár!',
-          message: 'Sürgősen frissítsd előfizetésed a folyamatos hozzáférésért.',
-          action: 'Sürgős frissítés'
+          title: 'VIP Trial expires within 1 hour!',
+          message: 'Urgently upgrade your subscription for continuous access.',
+          action: 'Urgent upgrade'
         });
         setLastNotificationTime(now);
       }
     }
     
-    // Lejárt trial
+    // Expired trial
     if (status.type === 'expired' && (now - lastNotificationTime) > 24 * 60 * 60 * 1000) {
       onNotify({
         type: 'error',
-        title: '3 Napos VIP Trial lejárt',
-        message: 'Frissíts most a VIP funkciók visszaszerzéséért.',
-        action: 'Előfizetés aktiválása'
+        title: '3-Day VIP Trial expired',
+        message: 'Upgrade now to regain access to VIP features.',
+        action: 'Activate subscription'
       });
       setLastNotificationTime(now);
     }
@@ -729,9 +729,6 @@ export function useCountdownNotifications(user: any, onNotify?: (notification: a
 
   return {
     shouldShowUpgradePrompt: status.type === 'trial' && status.hoursLeft <= 24,
-    urgencyLevel: status.isExpiringSoon ? 'high' : 'normal',
-    return () => clearInterval(interval);
-  }, [user]);
-
-  return status;
-}
+    urgencyLevel: status.isExpiringSoon ? 'high' : 'normal'
+    lastNotificationTime
+  };

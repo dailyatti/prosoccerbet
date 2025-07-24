@@ -49,8 +49,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Simple demo authentication
       const demoUser: User = {
-        id: 'user-' + Date.now(),
-        email: email,
+          subscription_active: false, // New users start with trial
+          subscription_expires_at: null,
         full_name: email.split('@')[0],
         whop_user_id: null,
         subscription_active: true, // Demo users get active subscription
