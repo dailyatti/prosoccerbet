@@ -1,13 +1,10 @@
 import { loadStripe } from '@stripe/stripe-js';
+import { supabase } from './supabase';
 
 // Initialize Stripe
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
-if (!stripePublishableKey) {
-  throw new Error('Missing Stripe publishable key');
-}
-
-export const stripePromise = loadStripe(stripePublishableKey);
+export const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 // Stripe configuration
 export const STRIPE_CONFIG = {
@@ -16,54 +13,37 @@ export const STRIPE_CONFIG = {
   country: 'US',
 };
 
-// Product configurations - you can update these with your actual Price IDs
-export const STRIPE_PRODUCTS = {
-  vip_monthly: {
-    priceId: 'price_1234567890', // Replace with your actual Price ID
-    name: 'VIP Monthly Subscription',
-    price: 99,
-    currency: 'usd',
-    interval: 'month',
-    description: 'Full access to all professional tools',
-    features: [
-      'AI Prompt Generator unlimited',
-      'Arbitrage Calculator full access',
-      'VIP Tips exclusive content',
-      'Priority support',
-      'Mobile optimized experience'
-    ]
-  },
-  vip_yearly: {
-    priceId: 'price_0987654321', // Replace with your actual Price ID
-    name: 'VIP Yearly Subscription',
-    price: 990,
-    currency: 'usd',
-    interval: 'year',
-    description: 'Annual subscription with 2 months free',
-    features: [
-      'AI Prompt Generator unlimited',
-      'Arbitrage Calculator full access',
-      'VIP Tips exclusive content',
-      'Priority support',
-      'Mobile optimized experience',
-      '2 months free (save $198)'
-    ]
-  }
-};
-
 // Create Checkout Session
-export async function createCheckoutSession(priceId: string, userEmail?: string) {
+export async function createCheckoutSession(
+  priceId: string, 
+  mode: 'payment' | 'subscription' = 'subscription',
+  successUrl?: string,
+  cancelUrl?: string
+) {
+  if (!supabase) {
+    throw new Error('Supabase not configured');
+  }
+
   try {
-    const response = await fetch('/api/create-checkout-session', {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('User not authenticated');
+    }
+
+    const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`;
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        priceId,
-        userEmail,
-        successUrl: `${window.location.origin}/#dashboard?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${window.location.origin}/#dashboard`,
+        price_id: priceId,
+        mode,
+        success_url: successUrl || `${window.location.origin}/#success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: cancelUrl || `${window.location.origin}/#dashboard`,
       }),
     });
 
@@ -71,70 +51,79 @@ export async function createCheckoutSession(priceId: string, userEmail?: string)
       throw new Error('Failed to create checkout session');
     }
 
-    const { sessionId } = await response.json();
+    const { sessionId, url } = await response.json();
     
     const stripe = await stripePromise;
     if (!stripe) {
       throw new Error('Stripe failed to load');
     }
 
-    const { error } = await stripe.redirectToCheckout({ sessionId });
-    
-    if (error) {
-      throw error;
+    // Redirect to Stripe Checkout
+    if (url) {
+      window.location.href = url;
+      return;
     }
+    
+    const { error } = await stripe.redirectToCheckout({ sessionId });
+    if (error) throw error;
   } catch (error) {
     console.error('Error creating checkout session:', error);
     throw error;
   }
 }
 
-// Create Customer Portal Session
-export async function createCustomerPortalSession(customerId: string) {
-  try {
-    const response = await fetch('/api/create-portal-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        customerId,
-        returnUrl: `${window.location.origin}/#dashboard`,
-      }),
-    });
+// Get user's subscription status
+export async function getUserSubscription() {
+  if (!supabase) {
+    throw new Error('Supabase not configured');
+  }
 
-    if (!response.ok) {
-      throw new Error('Failed to create portal session');
+  try {
+    const { data, error } = await supabase
+      .from('stripe_user_subscriptions')
+      .select('*')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching subscription:', error);
+      return null;
     }
 
-    const { url } = await response.json();
-    window.location.href = url;
+    return data;
   } catch (error) {
-    console.error('Error creating portal session:', error);
-    throw error;
+    console.error('Error getting user subscription:', error);
+    return null;
   }
 }
 
-// Check subscription status
-export async function checkSubscriptionStatus(userId: string) {
+// Get user's order history
+export async function getUserOrders() {
+  if (!supabase) {
+    throw new Error('Supabase not configured');
+  }
+
   try {
-    const response = await fetch(`/api/subscription-status?userId=${userId}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to check subscription status');
+    const { data, error } = await supabase
+      .from('stripe_user_orders')
+      .select('*')
+      .order('order_date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching orders:', error);
+      return [];
     }
 
-    return await response.json();
+    return data || [];
   } catch (error) {
-    console.error('Error checking subscription status:', error);
-    throw error;
+    console.error('Error getting user orders:', error);
+    return [];
   }
 }
 
 // Format currency
-export function formatCurrency(amount: number, currency: string = 'usd'): string {
+export function formatCurrency(amount: number, currency: string = 'eur'): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency.toUpperCase(),
-  }).format(amount / 100);
+  }).format(amount);
 }

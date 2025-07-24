@@ -2,26 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Crown, Calendar, CreditCard, Settings, ExternalLink, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { createCustomerPortalSession, checkSubscriptionStatus, formatCurrency } from '../../lib/stripe';
+import { getUserSubscription, formatCurrency } from '../../lib/stripe';
+import { STRIPE_PRODUCTS } from '../../stripe-config';
 
 interface SubscriptionData {
-  status: 'active' | 'canceled' | 'past_due' | 'incomplete';
-  current_period_end: number;
-  plan: {
-    amount: number;
-    currency: string;
-    interval: string;
-    product_name: string;
-  };
   customer_id: string;
+  subscription_id: string | null;
+  subscription_status: string;
+  price_id: string | null;
+  current_period_start: number | null;
+  current_period_end: number | null;
   cancel_at_period_end: boolean;
+  payment_method_brand: string | null;
+  payment_method_last4: string | null;
 }
 
 export function SubscriptionManagement() {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -31,30 +30,16 @@ export function SubscriptionManagement() {
   }, [user]);
 
   const fetchSubscriptionStatus = async () => {
-    if (!user) return;
-
     setLoading(true);
     setError('');
 
     try {
-      const data = await checkSubscriptionStatus(user.id);
+      const data = await getUserSubscription();
       setSubscription(data);
     } catch (err: any) {
       setError(err.message || 'Failed to load subscription details');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleManageSubscription = async () => {
-    if (!subscription) return;
-
-    setActionLoading(true);
-    try {
-      await createCustomerPortalSession(subscription.customer_id);
-    } catch (err: any) {
-      setError(err.message || 'Failed to open subscription management');
-      setActionLoading(false);
     }
   };
 
@@ -65,6 +50,7 @@ export function SubscriptionManagement() {
       case 'past_due':
         return 'text-orange-400 bg-orange-500/20';
       case 'canceled':
+      case 'cancelled':
         return 'text-red-400 bg-red-500/20';
       default:
         return 'text-gray-400 bg-gray-500/20';
@@ -80,12 +66,20 @@ export function SubscriptionManagement() {
       case 'past_due':
         return 'Past Due';
       case 'canceled':
+      case 'cancelled':
         return 'Canceled';
       case 'incomplete':
         return 'Incomplete';
       default:
         return status;
     }
+  };
+
+  const getProductInfo = (priceId: string | null) => {
+    if (!priceId) return null;
+    
+    const product = Object.values(STRIPE_PRODUCTS).find(p => p.priceId === priceId);
+    return product || null;
   };
 
   if (loading) {
@@ -117,7 +111,7 @@ export function SubscriptionManagement() {
     );
   }
 
-  if (!subscription) {
+  if (!subscription || !subscription.subscription_id) {
     return (
       <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
         <div className="text-center py-8">
@@ -128,6 +122,8 @@ export function SubscriptionManagement() {
       </div>
     );
   }
+
+  const productInfo = getProductInfo(subscription.price_id);
 
   return (
     <motion.div
@@ -142,23 +138,11 @@ export function SubscriptionManagement() {
           </div>
           <div>
             <h3 className="text-xl font-semibold text-white">VIP Subscription</h3>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(subscription.status)}`}>
-              {getStatusText(subscription.status, subscription.cancel_at_period_end)}
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(subscription.subscription_status)}`}>
+              {getStatusText(subscription.subscription_status, subscription.cancel_at_period_end)}
             </span>
           </div>
         </div>
-        
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleManageSubscription}
-          disabled={actionLoading}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
-        >
-          <Settings className="h-4 w-4" />
-          <span>{actionLoading ? 'Loading...' : 'Manage'}</span>
-          <ExternalLink className="h-4 w-4" />
-        </motion.button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -171,18 +155,18 @@ export function SubscriptionManagement() {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-400">Plan:</span>
-              <span className="text-white">{subscription.plan.product_name}</span>
+              <span className="text-white text-sm">{productInfo?.name || 'VIP Subscription'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Amount:</span>
               <span className="text-white">
-                {formatCurrency(subscription.plan.amount, subscription.plan.currency)}/{subscription.plan.interval}
+                {productInfo ? formatCurrency(productInfo.price, productInfo.currency) : 'N/A'}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Status:</span>
-              <span className={getStatusColor(subscription.status).split(' ')[0]}>
-                {getStatusText(subscription.status, subscription.cancel_at_period_end)}
+              <span className={getStatusColor(subscription.subscription_status).split(' ')[0]}>
+                {getStatusText(subscription.subscription_status, subscription.cancel_at_period_end)}
               </span>
             </div>
           </div>
@@ -200,7 +184,9 @@ export function SubscriptionManagement() {
                 {subscription.cancel_at_period_end ? 'Expires:' : 'Next Payment:'}
               </span>
               <span className="text-white">
-                {new Date(subscription.current_period_end * 1000).toLocaleDateString()}
+                {subscription.current_period_end 
+                  ? new Date(subscription.current_period_end * 1000).toLocaleDateString()
+                  : 'N/A'}
               </span>
             </div>
             <div className="flex justify-between">
@@ -209,6 +195,14 @@ export function SubscriptionManagement() {
                 {subscription.cancel_at_period_end ? 'Canceling' : 'Automatic'}
               </span>
             </div>
+            {subscription.payment_method_brand && subscription.payment_method_last4 && (
+              <div className="flex justify-between">
+                <span className="text-gray-400">Payment Method:</span>
+                <span className="text-white">
+                  {subscription.payment_method_brand.toUpperCase()} ****{subscription.payment_method_last4}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -225,44 +219,15 @@ export function SubscriptionManagement() {
             <div>
               <p className="text-orange-400 font-medium">Subscription Canceling</p>
               <p className="text-orange-300 text-sm">
-                Your subscription will end on {new Date(subscription.current_period_end * 1000).toLocaleDateString()}.
+                Your subscription will end on {subscription.current_period_end 
+                  ? new Date(subscription.current_period_end * 1000).toLocaleDateString()
+                  : 'N/A'}.
                 You'll continue to have access until then.
               </p>
             </div>
           </div>
         </motion.div>
       )}
-
-      {/* Management Actions */}
-      <div className="mt-6 pt-6 border-t border-gray-700">
-        <div className="flex flex-wrap gap-3">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleManageSubscription}
-            disabled={actionLoading}
-            className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 text-sm"
-          >
-            <CreditCard className="h-4 w-4" />
-            <span>Update Payment Method</span>
-          </motion.button>
-          
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleManageSubscription}
-            disabled={actionLoading}
-            className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 text-sm"
-          >
-            <Calendar className="h-4 w-4" />
-            <span>View Billing History</span>
-          </motion.button>
-        </div>
-        
-        <p className="text-gray-500 text-xs mt-3">
-          All subscription management is handled securely through Stripe's customer portal.
-        </p>
-      </div>
     </motion.div>
   );
 }

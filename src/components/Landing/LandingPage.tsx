@@ -1,8 +1,12 @@
 import React from 'react';
 import { Brain, Calculator, Crown, Users, Shield, Zap, ArrowRight, Star, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { STRIPE_PRODUCTS } from '../../stripe-config';
+import { formatCurrency } from '../../lib/stripe';
 
 export function LandingPage() {
+  const product = STRIPE_PRODUCTS.advanced_arbitrage_ai_prompts;
+
   const features = [
     {
       icon: Brain,
@@ -45,15 +49,6 @@ export function LandingPage() {
     }
   ];
 
-  const pricingFeatures = [
-    'AI Prompt Generator with image analysis',
-    'Real-time Arbitrage Calculator',
-    'Exclusive VIP betting tips',
-    'Professional dashboard access',
-    'Priority customer support',
-    'Mobile-optimized experience'
-  ];
-
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Hero Section */}
@@ -89,8 +84,7 @@ export function LandingPage() {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed"
             >
-              Professional software platform with AI-powered tools, arbitrage calculations, and exclusive VIP insights. 
-              Built for professionals who demand excellence.
+              {product.description}
             </motion.p>
             
             <motion.div
@@ -125,7 +119,7 @@ export function LandingPage() {
                 whileTap={{ scale: 0.95 }}
                 className="border-2 border-gray-600 hover:border-blue-500 text-gray-300 hover:text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 backdrop-blur-sm"
               >
-                Subscribe via Stripe - $99/month
+                Subscribe - {formatCurrency(product.price, product.currency)}/{product.interval}
               </motion.a>
             </motion.div>
           </motion.div>
@@ -241,16 +235,16 @@ export function LandingPage() {
             className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl p-12 border border-gray-700 shadow-2xl"
           >
             <div className="text-center mb-8">
-              <h3 className="text-3xl font-bold text-white mb-4">Professional Access</h3>
+              <h3 className="text-3xl font-bold text-white mb-4">{product.name}</h3>
               <div className="flex items-center justify-center mb-4">
-                <span className="text-5xl font-bold text-white">$99</span>
-                <span className="text-gray-400 ml-2">/month</span>
+                <span className="text-5xl font-bold text-white">{formatCurrency(product.price, product.currency)}</span>
+                <span className="text-gray-400 ml-2">/{product.interval}</span>
               </div>
-              <p className="text-gray-400">Full access to all professional tools</p>
+              <p className="text-gray-400">{product.description}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {pricingFeatures.map((feature, index) => (
+              {product.features.map((feature, index) => (
                 <motion.div
                   key={feature}
                   initial={{ opacity: 0, x: -20 }}
@@ -276,7 +270,7 @@ export function LandingPage() {
               whileTap={{ scale: 0.95 }}
               className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white font-semibold py-4 px-12 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl inline-block text-lg"
             >
-              Subscribe Now - $99/month
+              Subscribe Now - {formatCurrency(product.price, product.currency)}/{product.interval}
             </motion.a>
           </motion.div>
         </div>
@@ -356,7 +350,7 @@ export function LandingPage() {
               Ready to Elevate Your Professional Game?
             </h2>
             <p className="text-xl text-gray-300 mb-12 leading-relaxed">
-              Join thousands of professionals who trust ProSoft Hub for their success. Premium access for just $99/month.
+              Join thousands of professionals who trust ProSoft Hub for their success. Premium access for just {formatCurrency(product.price, product.currency)}/{product.interval}.
             </p>
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -389,7 +383,7 @@ export function LandingPage() {
                 whileTap={{ scale: 0.95 }}
                 className="border-2 border-white text-white font-semibold py-4 px-12 rounded-xl transition-all duration-300 hover:bg-white hover:text-gray-900 text-lg"
               >
-                Subscribe Now - $99/month
+                Subscribe Now - {formatCurrency(product.price, product.currency)}/{product.interval}
               </motion.a>
             </motion.div>
           </motion.div>

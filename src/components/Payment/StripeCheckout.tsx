@@ -1,24 +1,22 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Crown, Check, CreditCard, Shield, Zap, Users } from 'lucide-react';
-import { createCheckoutSession, STRIPE_PRODUCTS, formatCurrency } from '../../lib/stripe';
+import { createCheckoutSession, formatCurrency } from '../../lib/stripe';
+import { STRIPE_PRODUCTS } from '../../stripe-config';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface StripeCheckoutProps {
   onClose?: () => void;
-  selectedPlan?: 'monthly' | 'yearly';
 }
 
-export function StripeCheckout({ onClose, selectedPlan = 'monthly' }: StripeCheckoutProps) {
+export function StripeCheckout({ onClose }: StripeCheckoutProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [selectedPlanState, setSelectedPlanState] = useState(selectedPlan);
   const [error, setError] = useState('');
 
-  const monthlyPlan = STRIPE_PRODUCTS.vip_monthly;
-  const yearlyPlan = STRIPE_PRODUCTS.vip_yearly;
+  const product = STRIPE_PRODUCTS.advanced_arbitrage_ai_prompts;
 
-  const handleSubscribe = async (priceId: string) => {
+  const handleSubscribe = async () => {
     if (!user) {
       setError('Please log in to subscribe');
       return;
@@ -28,14 +26,12 @@ export function StripeCheckout({ onClose, selectedPlan = 'monthly' }: StripeChec
     setError('');
 
     try {
-      await createCheckoutSession(priceId, user.email);
+      await createCheckoutSession(product.priceId, product.mode);
     } catch (err: any) {
       setError(err.message || 'Failed to start checkout process');
       setLoading(false);
     }
   };
-
-  const savings = (monthlyPlan.price * 12) - yearlyPlan.price;
 
   return (
     <motion.div
@@ -57,117 +53,35 @@ export function StripeCheckout({ onClose, selectedPlan = 'monthly' }: StripeChec
           </div>
           <h2 className="text-3xl font-bold text-white mb-2">Upgrade to VIP</h2>
           <p className="text-gray-400">
-            Unlock all professional tools and maximize your potential
+            {product.description}
           </p>
         </div>
 
-        {/* Plan Toggle */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-gray-700 rounded-lg p-1 flex">
-            <button
-              onClick={() => setSelectedPlanState('monthly')}
-              className={`px-6 py-2 rounded-md transition-all ${
-                selectedPlanState === 'monthly'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setSelectedPlanState('yearly')}
-              className={`px-6 py-2 rounded-md transition-all relative ${
-                selectedPlanState === 'yearly'
-                  ? 'bg-green-600 text-white shadow-lg'
-                  : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              Yearly
-              <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                Save ${savings}
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          {/* Monthly Plan */}
+        {/* Product Card */}
+        <div className="max-w-2xl mx-auto mb-8">
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className={`rounded-xl p-6 border-2 transition-all ${
-              selectedPlanState === 'monthly'
-                ? 'border-blue-500 bg-blue-500/10'
-                : 'border-gray-700 bg-gray-800/50'
-            }`}
-          >
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-semibold text-white mb-2">Monthly Plan</h3>
-              <div className="flex items-center justify-center mb-4">
-                <span className="text-4xl font-bold text-white">
-                  {formatCurrency(monthlyPlan.price * 100)}
-                </span>
-                <span className="text-gray-400 ml-2">/month</span>
-              </div>
-              <p className="text-gray-400 text-sm">{monthlyPlan.description}</p>
-            </div>
-
-            <ul className="space-y-3 mb-6">
-              {monthlyPlan.features.map((feature, index) => (
-                <li key={index} className="flex items-center">
-                  <Check className="h-5 w-5 text-green-400 mr-3" />
-                  <span className="text-gray-300">{feature}</span>
-                </li>
-              ))}
-            </ul>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleSubscribe(monthlyPlan.priceId)}
-              disabled={loading}
-              className={`w-full py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${
-                selectedPlanState === 'monthly'
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
-            >
-              <CreditCard className="h-5 w-5" />
-              <span>{loading ? 'Processing...' : 'Choose Monthly'}</span>
-            </motion.button>
-          </motion.div>
-
-          {/* Yearly Plan */}
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            className={`rounded-xl p-6 border-2 transition-all relative ${
-              selectedPlanState === 'yearly'
-                ? 'border-green-500 bg-green-500/10'
-                : 'border-gray-700 bg-gray-800/50'
-            }`}
+            className="rounded-xl p-8 border-2 border-blue-500 bg-blue-500/10 relative"
           >
             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <span className="bg-green-500 text-white text-sm px-4 py-1 rounded-full">
-                BEST VALUE
+              <span className="bg-blue-500 text-white text-sm px-4 py-1 rounded-full">
+                PROFESSIONAL TOOLS
               </span>
             </div>
 
             <div className="text-center mb-6">
-              <h3 className="text-xl font-semibold text-white mb-2">Yearly Plan</h3>
+              <h3 className="text-2xl font-semibold text-white mb-4">{product.name}</h3>
               <div className="flex items-center justify-center mb-2">
                 <span className="text-4xl font-bold text-white">
-                  {formatCurrency(yearlyPlan.price * 100)}
+                  {formatCurrency(product.price, product.currency)}
                 </span>
-                <span className="text-gray-400 ml-2">/year</span>
+                <span className="text-gray-400 ml-2">/{product.interval}</span>
               </div>
-              <div className="text-green-400 text-sm mb-4">
-                Save ${savings} compared to monthly
-              </div>
-              <p className="text-gray-400 text-sm">{yearlyPlan.description}</p>
+              <p className="text-gray-300 text-sm leading-relaxed">{product.description}</p>
             </div>
 
             <ul className="space-y-3 mb-6">
-              {yearlyPlan.features.map((feature, index) => (
+              {product.features.map((feature, index) => (
                 <li key={index} className="flex items-center">
                   <Check className="h-5 w-5 text-green-400 mr-3" />
                   <span className="text-gray-300">{feature}</span>
@@ -178,16 +92,12 @@ export function StripeCheckout({ onClose, selectedPlan = 'monthly' }: StripeChec
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => handleSubscribe(yearlyPlan.priceId)}
+              onClick={handleSubscribe}
               disabled={loading}
-              className={`w-full py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 ${
-                selectedPlanState === 'yearly'
-                  ? 'bg-green-600 hover:bg-green-700 text-white'
-                  : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              className="w-full py-4 px-6 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed text-lg"
             >
               <Crown className="h-5 w-5" />
-              <span>{loading ? 'Processing...' : 'Choose Yearly'}</span>
+              <span>{loading ? 'Processing...' : `Subscribe for ${formatCurrency(product.price, product.currency)}/${product.interval}`}</span>
             </motion.button>
           </motion.div>
         </div>

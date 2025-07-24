@@ -10,16 +10,35 @@ import { VipTips } from './components/Tools/VipTips';
 import { AdminPanel } from './components/Admin/AdminPanel';
 import { LandingPage } from './components/Landing/LandingPage';
 import { ProfileSettings } from './components/User/ProfileSettings';
+import { SuccessPage } from './components/Success/SuccessPage';
 import { LoadingScreen } from './components/Loading/LoadingScreen';
 import { motion, AnimatePresence } from 'framer-motion';
 import { hasPremiumAccess } from './lib/dateUtils';
 import { StripeCheckout } from './components/Payment/StripeCheckout';
+import { getUserSubscription } from './lib/stripe';
 
 function AppContent() {
   const { user, loading } = useAuth();
   const [currentView, setCurrentView] = useState('landing');
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+
+  // Check subscription status
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if (user) {
+        try {
+          const subscription = await getUserSubscription();
+          setHasActiveSubscription(subscription?.subscription_status === 'active');
+        } catch (error) {
+          console.error('Error checking subscription:', error);
+        }
+      }
+    };
+
+    checkSubscription();
+  }, [user]);
 
   // Handle URL hash changes
   useEffect(() => {
@@ -106,6 +125,16 @@ function AppContent() {
     );
   }
 
+  // Success page
+  if (currentView === 'success') {
+    return (
+      <div className="min-h-screen bg-gray-900">
+        <Header />
+        <SuccessPage />
+      </div>
+    );
+  }
+
   // Landing page for non-logged in users
   if (!user) {
     return (
@@ -117,7 +146,7 @@ function AppContent() {
   }
 
   // Check access for protected routes using professional date utility
-  const hasAccess = hasPremiumAccess(user);
+  const hasAccess = hasPremiumAccess(user) || hasActiveSubscription;
   const protectedRoutes = ['prompt-generator', 'arbitrage', 'vip-tips'];
   
   if (protectedRoutes.includes(currentView) && !hasAccess) {
@@ -138,14 +167,12 @@ function AppContent() {
               </p>
             </div>
             <div className="space-y-4">
-              <a
-                href="https://whop.com/ai-sports-betting-tips-premium/"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => setShowStripeCheckout(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors inline-block"
               >
-                Subscribe Now - $99/month
-              </a>
+                Subscribe Now
+              </button>
               <button
                 onClick={() => window.location.hash = 'dashboard'}
                 className="block w-full text-gray-400 hover:text-white transition-colors"
@@ -168,6 +195,8 @@ function AppContent() {
         return <ProfileSettings />;
       case 'vip-tips':
         return <VipTips />;
+      case 'success':
+        return <SuccessPage />;
       case 'admin':
         return user.is_admin ? <AdminPanel /> : <Dashboard />;
       default:

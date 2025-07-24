@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useSubscriptionStatus, formatDate } from '../../lib/dateUtils';
 import { CompactCountdown } from '../UI/CountdownTimer';
 import { SubscriptionManagement } from '../Payment/SubscriptionManagement';
+import { getUserSubscription } from '../../lib/stripe';
 
 export function ProfileSettings() {
   const { user } = useAuth();
@@ -12,6 +13,7 @@ export function ProfileSettings() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [stripeSubscription, setStripeSubscription] = useState<any>(null);
   
   // Password change state
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -21,6 +23,21 @@ export function ProfileSettings() {
 
   // Use real-time subscription status
   const subscriptionStatus = useSubscriptionStatus(user);
+
+  useEffect(() => {
+    const checkStripeSubscription = async () => {
+      if (user) {
+        try {
+          const subscription = await getUserSubscription();
+          setStripeSubscription(subscription);
+        } catch (error) {
+          console.error('Error checking Stripe subscription:', error);
+        }
+      }
+    };
+
+    checkStripeSubscription();
+  }, [user]);
 
   const updateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,22 +138,33 @@ export function ProfileSettings() {
                     <Crown className="h-5 w-5 text-yellow-400" />
                     <span className="text-white font-medium">Subscription Status</span>
                   </div>
-                  <span className={`font-medium ${
-                    subscriptionStatus.type === 'trial' ? 'text-blue-400' :
-                    subscriptionStatus.type === 'active' ? 'text-green-400' :
-                    'text-red-400'
-                  }`}>
-                    {subscriptionStatus.text}
-                  </span>
+                  
+                  {stripeSubscription?.subscription_status === 'active' ? (
+                    <span className="font-medium text-green-400">Premium Active</span>
+                  ) : (
+                    <span className={`font-medium ${
+                      subscriptionStatus.type === 'trial' ? 'text-blue-400' :
+                      subscriptionStatus.type === 'active' ? 'text-green-400' :
+                      'text-red-400'
+                    }`}>
+                      {subscriptionStatus.text}
+                    </span>
+                  )}
                   
                   {/* Real-time Countdown */}
-                  <div className="mt-2">
-                    <CompactCountdown
-                      expiryDate={subscriptionStatus.type === 'trial' ? user?.trial_expires_at : user?.subscription_expires_at}
-                    />
-                  </div>
+                  {!stripeSubscription?.subscription_status && (
+                    <div className="mt-2">
+                      <CompactCountdown
+                        expiryDate={subscriptionStatus.type === 'trial' ? user?.trial_expires_at : user?.subscription_expires_at}
+                      />
+                    </div>
+                  )}
                   
-                  {subscriptionStatus.formattedExpiry !== 'N/A' && (
+                  {stripeSubscription?.current_period_end ? (
+                    <p className="text-gray-400 text-sm mt-2">
+                      Next billing: {new Date(stripeSubscription.current_period_end * 1000).toLocaleDateString()}
+                    </p>
+                  ) : subscriptionStatus.formattedExpiry !== 'N/A' && (
                     <p className="text-gray-400 text-sm mt-2">
                       Expires: {subscriptionStatus.formattedExpiry}
                     </p>
@@ -169,7 +197,7 @@ export function ProfileSettings() {
                   <span className="text-gray-300">Change Password</span>
                 </button>
                 
-                {(!user?.subscription_active && subscriptionStatus.type !== 'trial') && (
+                {(!stripeSubscription?.subscription_status && !user?.subscription_active && subscriptionStatus.type !== 'trial') && (
                   <a
                     href="#"
                     onClick={(e) => {
@@ -332,7 +360,7 @@ export function ProfileSettings() {
             )}
 
             {/* Subscription Management */}
-            {user?.subscription_active && (
+            {(stripeSubscription?.subscription_status === 'active' || user?.subscription_active) && (
               <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
                 <h3 className="text-xl font-semibold text-white mb-6">Subscription Management</h3>
                 <SubscriptionManagement />
@@ -346,7 +374,7 @@ export function ProfileSettings() {
                 Once you cancel your subscription, you will lose access to all premium features.
               </p>
               
-              {user?.subscription_active && (
+              {(stripeSubscription?.subscription_status === 'active' || user?.subscription_active) && (
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
